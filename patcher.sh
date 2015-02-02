@@ -16,7 +16,6 @@ UPDATES=$(git fetch && \
 git show -s --format=%B $UPDATES
 }
 
-fetch_updates
 
 
 
