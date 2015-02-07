@@ -2,7 +2,14 @@
 
 export supertitle="FOSSEE Netbook Updates"
 source easybashgui
-selected_update=''
+
+files_in_all_commits=files_in_all_commits.txt
+all_commits_one_liner_with_date=all_commits_one_liner_with_date.txt
+all_commits_dates_with_file_paths=all_commits_dates_with_file_paths.txt
+past_applied_commits=past_applied_commits.txt
+INET_AVAILABLE=0
+
+[ -f $files_in_all_commits ] && rm $files_in_all_commits
 
 generic_return_code='Working offline. Select Ok to continue.'
 return_code_1="Unknown error occured. $generic_return_code"
@@ -20,7 +27,7 @@ function check_internet() {
 	    do
 		wget $each/robots.txt &> /dev/null
 		return_code=$?
-		[ $return_code -eq 0 ] && list_updates && exit 0
+		[ $return_code -eq 0 ] && INET_AVAILABLE=1 && break
 		[ $return_code -eq 1 ] && alert_message $return_code_1 && break
 		[ $return_code -eq 3 ] && alert_message $return_code_3 && break
 		[ $return_code -eq 4 ] && alert_message $return_code_4 && break
@@ -32,13 +39,36 @@ function check_internet() {
 
 
 #fetch updates from github and show
-function list_updates() {
-	git log --format=%h\;\[%ar\]\;%s HEAD > /tmp/1 #make a local copy for editing
-	selected_update=$(menu -w 900 -h 500 "$(git pull >/dev/null && git log --format=\[%ar\]\ \ \ %s\ \[%h\] HEAD)" 2>&1)
-	selected_commit_hash=$(echo $selected_update | rev | cut -c -9 | rev | tr -d '[|]')
-	echo $selected_commit_hash
+function format_list_updates() {
+	#make a local copy for editing
+	[ $INET_AVAILABLE -eq 1 ] && git log --format=\;\[%ar\]\;%s\;%h HEAD >\
+				     $all_commits_one_liner_with_date
+	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 4)
+	    do
+		files_in_each_commit=$(git show --first-parent --pretty="format:" --name-only $each)
+		echo $files_in_each_commit | tr ' ' ',' >> $files_in_all_commits
+	    done
+	paste -d ';' $all_commits_one_liner_with_date \
+                     $files_in_all_commits | \
+		     awk 'BEGIN{FS=";";OFS=";"} {$1="[Not Updated]"} 1' > \
+		     $all_commits_dates_with_file_paths
+}
+
+#function updates_
+
+
+function select_applied_updates() {
+	#[ -f $past_applied_commits ] && paste $past_applied_commits
+	true
+}
+
+function clean_up() {
+
+[ -f robots.txt ] && rm robots.txt
 }
 
 
-#Function call
-check_internet #if success, it call fetch_updates(), else call list_updates()
+#Function calls
+check_internet
+format_list_updates
+clean_up
