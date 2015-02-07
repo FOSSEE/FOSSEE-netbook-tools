@@ -41,9 +41,9 @@ function check_internet() {
 #fetch updates from github and show
 function format_list_updates() {
 	#make a local copy for editing
-	[ $INET_AVAILABLE -eq 1 ] && git log --format=\;\[%ar\]\;%s\;%h HEAD >\
+	[ $INET_AVAILABLE -eq 1 ] && git log --format=\;\(%ar\)\;%s\;\(%h\) HEAD >\
 				     $all_commits_one_liner_with_date
-	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 4)
+	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 4 | tr -d '(|)')
 	    do
 		files_in_each_commit=$(git show --first-parent --pretty="format:" --name-only $each)
 		echo $files_in_each_commit | tr ' ' ',' >> $files_in_all_commits
@@ -57,10 +57,15 @@ function format_list_updates() {
 #function updates_
 
 
-function select_applied_updates() {
+function select_updates() {
 	#[ -f $past_applied_commits ] && paste $past_applied_commits
-	true
+	#menu $(cat $all_commits_dates_with_file_paths)
+	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | \
+                         cut -d ';' -f 1,2,3,4| tr ';' '  ' )" 2>&1)
+	echo $selected_update
 }
+
+
 
 function clean_up() {
 
@@ -71,4 +76,5 @@ function clean_up() {
 #Function calls
 check_internet
 format_list_updates
+select_updates
 clean_up
