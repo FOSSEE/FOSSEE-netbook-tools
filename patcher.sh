@@ -12,6 +12,7 @@ all_commits_one_liner_with_date=all_commits_one_liner_with_date.txt
 all_commits_dates_with_file_paths=all_commits_dates_with_file_paths.txt
 past_applied_commits=past_applied_commits.txt
 local_updates=local_updates
+updated_file=updates.txt
 INET_AVAILABLE=0
 
 
@@ -33,9 +34,9 @@ function clean_up() {
 	[ -d $local_updates ] && rm -rf $local_updates
 
 }
-#The for loop may break in most of the time, unless there is an error in fossee.in
+
 function check_internet() {
-	#wait_for "Checking internet"
+	#wait_for internet
 	for each in {fossee.in,github.com};
 	    do
 		wget $each/$testfile &> /dev/null
@@ -71,7 +72,7 @@ function format_list_updates() {
 
 
 function select_updates() {
-	#[ -f $past_applied_commits ] && paste $past_applied_commits
+	#[ -f $updated_file ] && paste $past_applied_commits
 	#menu $(cat $all_commits_dates_with_file_paths)
 	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | \
                          cut -d ';' -f 1,2,3,4| tr ';' '  ' )" 2>&1)
@@ -83,13 +84,12 @@ function select_updates() {
 		do
 			mkdir -p $local_updates/$(dirname $each_file)
 			git show $selected_hash:$each_file>$local_updates/$each_file
+			echo $selected_hash;$files_in_selected_hash>>$updated_file
 		done
 
+
+
 }
-
-
-
-
 
 
 #Function calls
