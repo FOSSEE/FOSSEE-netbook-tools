@@ -68,7 +68,7 @@ function format_list_updates() {
 		     $all_commits_dates_with_file_paths
 }
 
-#function updates_
+#function updates
 
 
 function select_updates() {
@@ -84,11 +84,10 @@ function select_updates() {
 		do
 			mkdir -p $local_updates/$(dirname $each_file)
 			git show $selected_hash:$each_file>$local_updates/$each_file
-			echo $selected_hash;$files_in_selected_hash>>$updated_file
+#				for commit_files_present in $updated_file
+
+			echo "$selected_hash;$files_in_selected_hash">>$updated_file
 		done
-
-
-
 }
 
 

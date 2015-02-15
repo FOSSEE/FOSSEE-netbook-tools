@@ -1,16 +1,21 @@
 README
 ======
 
+
 A simple git based application to manage distribution specific patches for
 FOSSEE-netbook.
 
-This tool shall do the following:
+What it can do
+--------------
 
-* A simple graphical & CLI tool to select available patches and apply them
-  individually
+* A simple graphical & CLI tool to select and apply available patches
 
-* Ability to downgrade to any pervious version
-
-* Ability to change Kernel, firmware and modules
+* It can change Kernel, firmware and modules
 
 
+Limitations
+-----------
+
+* Only one patch at a time can be applied
+
+* Removing a patch is not implemented, one has to revert to a known version manually
