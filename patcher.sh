@@ -85,7 +85,7 @@ function check_internet() {
 # ======================================================================================
 
 # Fetch updates if internet is available and formulate a CSV
-function format_list_updates() {
+function list_updates() {
 	# If internet available just merge the changes (won't update patches automatically)
 	[ $INET_AVAILABLE -eq 1 ] && git pull
 	# Create CSV of commits with only tags( git tags are used to group similar patches)
@@ -107,7 +107,7 @@ function format_list_updates() {
 
 # ======================================================================================
 
-function select_updates() {
+function check_past_updates() {
 	# If no new/old update available, just quit (Ignoring HEAD based tags to avoid confusion)
 	no_updates=$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | wc -c)
 	[ $no_updates -eq 0 ] && alert_message "No available updates !!!" && exit 0
@@ -117,14 +117,27 @@ function select_updates() {
 			line=$(grep -on $hash $all_commits_dates_with_file_paths | cut -d ':' -f 1);\
 		 	sed -i $line's/\[Not\ Updated\]/\[Updated\]/g' $all_commits_dates_with_file_paths;
 		done
+}
+
+
+# ======================================================================================
+
+function select_updates() {
+	# Show updates using 'menu' of 'easybashgui'
 	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | \
                          cut -d ';' -f 1,2,3,4,5| tr ';' '  ' )" 2>&1)
 			 [ $? -eq 1 ] && exit 0
 	#get hash for selected_update
 	selected_hash=$(echo $selected_update | grep -o \([0-9a-z]*\) | tr -d '(|)')
 	selected_tag=$(echo $selected_update | grep -o \(tag:\ [A-Za-z0-9._-]*\) | sed 's/(tag:\ //' |sed 's/)//')
+}
+
+
+# ======================================================================================
+
+function generate_commit_files() {
 	# At a time only one version from similar group of tags will be applied, for eg: AudioMic-1 and
-        # AudioMic-2 (tags/commits/patches) can't be applied simultaneously as they affect same file
+        # AudioMic-2 (tags) can't be applied simultaneously as they might point to same file
 	find $unique_tags -iname $(echo $selected_tag | cut -d '-' -f 1)\* | grep '' && [ $? -eq 0 ] && \
 			rm $(find $unique_tags -iname $(echo $selected_tag | cut -d '-' -f 1)\*)
 	# This will help identifying the unique tags among group of tags(commits/patches)
@@ -138,7 +151,6 @@ function select_updates() {
 			git show $selected_hash:$each_file>$local_updates/$each_file
 			echo "$selected_hash,$selected_tag">>$logfile
 		done
-
 }
 
 # ======================================================================================
@@ -148,7 +160,6 @@ function sudo_access() {
 sudo -K
 # The only place 'easybashgui' fails. So adding separate functions for both tty(consoles)
 # and pts(terminals). If tty not found, it returns 1, and 'zenity' is used
-
 tty | grep tty
 if [ $? -eq 1 ]; then
 
@@ -156,7 +167,6 @@ while true
 	do
 		password=$(zenity --title "Enter your password to continue" --password)
 		# zenity dialog button 'Cancel' returns 1, and 'Yes' returns 0.
-		# Check for zenity 'Cancel' option
 		[ $? -eq 1 ] && exit 0
 		echo $password | sudo -S echo "test">/dev/null
 		# If wrong password then brek
@@ -178,9 +188,7 @@ while true
 fi
 }
 
-
 # ======================================================================================
-
 
 function apply_updates() {
 	question "Do you want to apply the selected update? This will affect the following file(s):\
@@ -197,16 +205,39 @@ function apply_updates() {
 	call_functions
 }
 
+
+# ======================================================================================
+
+#function spl_kernel_manage() {
+
+	# environment variables
+#	kernel_image=uzImage.bin
+#	ramdisk_image=initrd.img
+#	boot_part=/dev/mtd4
+
+#	mkbootimg --kernel $kernel_image --ramdisk $ramdisk_image -o /tmp/boot.img
+#       sync
+#        echo 0 > /sys/module/yaffs/parameters/yaffs_bg_enable
+#        flash_erase $boot_part 0 0
+#        nandwrite -p $boot_part /tmp/boot.img
+#	sync
+#        echo 1 > /sys/module/yaffs/parameters/yaffs_bg_enable
+#}
+
 # ======================================================================================
 
 function call_functions() {
 #Function calls
 	clean_up
 	check_internet
-	format_list_updates
+	list_updates
+	check_past_updates
 	select_updates
+	generate_commit_files
 	sudo_access
 	apply_updates
+	# Comment next function if you are not using FOSSEE netbook
+	#spl_kernel_manage
 }
 
 
