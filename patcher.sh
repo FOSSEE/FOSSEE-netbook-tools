@@ -6,6 +6,7 @@ source easybashgui
 #for Debugging
 #set -x
 
+logfile=patcher.log
 testfile=robots.txt
 files_in_all_commits=files_in_all_commits.txt
 all_commits_one_liner_with_date=all_commits_one_liner_with_date.txt
@@ -17,7 +18,6 @@ unique_tags=unique_tags
 updated_file=updates.txt
 INET_AVAILABLE=0
 
-
 generic_return_code='Working offline. Select Ok to continue.'
 return_code_1="Unknown error occured. $generic_return_code"
 return_code_3="File I/0 error. $generic_return_code"
@@ -27,13 +27,14 @@ return_code_7="Protocol error. $generic_return_code"
 return_code_8="Server error. $generic_return_code"
 
 function clean_up() {
-
-	[ -f $testfile ] && rm $testfile
-	[ -f $files_in_all_commits ] && rm $files_in_all_commits
-	[ -f $all_commits_one_liner_with_date ] && rm $all_commits_one_liner_with_date
-	[ -f $all_commits_dates_with_file_paths ] && rm $all_commits_dates_with_file_paths
-	[ -f $past_applied_commits ] && rm $past_applied_commits
-	[ -d $local_updates ] && rm -rf $local_updates
+	echo "================================ New iteration =============================">>$logfile
+	date >> $logfile
+	[ -f $testfile ] && rm -v $testfile>>$logfile
+	[ -f $files_in_all_commits ] && rm -v $files_in_all_commits>>$logfile
+	[ -f $all_commits_one_liner_with_date ] && rm -v $all_commits_one_liner_with_date>>$logfile
+	[ -f $all_commits_dates_with_file_paths ] && rm -v $all_commits_dates_with_file_paths>>$logfile
+	[ -f $past_applied_commits ] && rm -v $past_applied_commits>>$logfile
+	[ -d $local_updates ] && rm -rvf $local_updates/>>$logfile
 
 }
 
@@ -76,7 +77,8 @@ function select_updates() {
 			line=$(grep -on $hash $all_commits_dates_with_file_paths | cut -d ':' -f 1);\
 		 	sed -i $line's/\[Not\ Updated\]/\[Updated\]/g' $all_commits_dates_with_file_paths;
 		done
-	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | \
+
+	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | sed '/HEAD,\ origin/d' | \
                          cut -d ';' -f 1,2,3,4,5| tr ';' '  ' )" 2>&1)
 			 [ $? -eq 1 ] && exit 0
 	#get hash for selected_update
@@ -92,17 +94,56 @@ function select_updates() {
 		do
 			mkdir -p $local_updates/$(dirname $each_file)
 			git show $selected_hash:$each_file>$local_updates/$each_file
+			echo "$selected_hash,$selected_tag">>$logfile
 		done
 
 }
 
 
-function sudoAccess() {
-[ $EUID != 0 ] && sudo -S echo "success" >/dev/null
+function sudo_access() {
+sudo -K
+# The only place easybashgui fails. So adding separate functions for both tty(consoles) and pts(terminals)
+# If tty not found, returns 1, so use zenity
+tty | grep tty && \
+while true
+	do
+		password=$(zenity --title "Enter your password to continue" --password)
+		# zenity dialog button 'Cancel' returns 1, and 'Yes' returns 0.
+		# Check for zenity 'Cancel' option
+		[ $? -eq 1 ] && exit 0
+		echo $password | sudo -S echo "test">/dev/null
+		# If wrong password then brek
+		[ $? -eq 0 ] && break
+	done
+
+
+tty | grep pts  && \
+while true
+	do
+	password=$(dialog --title "Password" \
+                  --clear \
+                  --passwordbox "Enter your password" 10 30 \
+                  --stdout)
+	[ $? -eq 1 ] && exit 0
+                echo $password | sudo -S echo "test">/dev/null
+                # If wrong password then brek
+                [ $? -eq 0 ] && break
+	done
+
 }
 
+
+
+
 function apply_updates() {
-	question "Update done. Select 'Ok' to revisit update selection menu. Select 'Cancel to 'Quit' this program"
+	question "Do you want to apply the selected update? This will affect the following file(s): '/$files_in_selected_hash'" 2>&1
+	[ $? -eq 1 ] && exit 0
+	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
+		do
+			echo "##### applying updates #####">>$logfile
+			mv -v $local_updates/$each_file /$each_file>>$logfile
+		done
+	question "Update done. Select 'Ok/Yes' to revisit update selection menu. Select 'Cancel/No' to 'Quit' this program"
 	[ $? -eq 1 ] && exit 0
 	call_functions
 }
@@ -110,11 +151,11 @@ function apply_updates() {
 function call_functions() {
 #Function calls
 	clean_up
-	check_internet
-	format_list_updates
-	select_updates
-	sudoAccess
-	apply_updates
+#	check_internet
+#	format_list_updates
+#	select_updates
+	sudo_access
+#	apply_updates
 }
 
 # __init__
