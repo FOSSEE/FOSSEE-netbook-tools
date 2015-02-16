@@ -12,6 +12,8 @@ all_commits_one_liner_with_date=all_commits_one_liner_with_date.txt
 all_commits_dates_with_file_paths=all_commits_dates_with_file_paths.txt
 past_applied_commits=past_applied_commits.txt
 local_updates=local_updates
+unique_tags=unique_tags
+	[ ! -d $unique_tags ] && mkdir -p $unique_tags
 updated_file=updates.txt
 INET_AVAILABLE=0
 
@@ -55,9 +57,9 @@ function check_internet() {
 #fetch updates from github and show
 function format_list_updates() {
 	#make a local copy for editing
-	[ $INET_AVAILABLE -eq 1 ] && git log --format=\;\(%ar\)\;%s\;\(%h\) HEAD >\
+	[ $INET_AVAILABLE -eq 1 ] && git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
 				     $all_commits_one_liner_with_date
-	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 4 | tr -d '(|)')
+	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 5 | tr -d '(|)')
 	    do
 		files_in_each_commit=$(git show --first-parent --pretty="format:" --name-only $each)
 		echo $files_in_each_commit | tr ' ' ',' >> $files_in_all_commits
@@ -68,31 +70,52 @@ function format_list_updates() {
 		     $all_commits_dates_with_file_paths
 }
 
-#function updates
-
-
 function select_updates() {
-	#[ -f $updated_file ] && paste $past_applied_commits
-	#menu $(cat $all_commits_dates_with_file_paths)
+	for hash in $(cat unique_tags/*);
+		do
+			line=$(grep -on $hash $all_commits_dates_with_file_paths | cut -d ':' -f 1);\
+		 	sed -i $line's/\[Not\ Updated\]/\[Updated\]/g' $all_commits_dates_with_file_paths;
+		done
 	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | \
-                         cut -d ';' -f 1,2,3,4| tr ';' '  ' )" 2>&1)
+                         cut -d ';' -f 1,2,3,4,5| tr ';' '  ' )" 2>&1)
+			 [ $? -eq 1 ] && exit 0
 	#get hash for selected_update
 	selected_hash=$(echo $selected_update | grep -o \([0-9a-z]*\) | tr -d '(|)')
-	files_in_selected_hash=$(grep $selected_hash $all_commits_dates_with_file_paths | cut -d ';' -f5)
+	selected_tag=$(echo $selected_update | grep -o \(tag:\ [A-Za-z0-9._-]*\) | sed 's/(tag:\ //' |sed 's/)//')
+	#At a time only one version from associated tag
+	find $unique_tags -iname $(echo $selected_tag | cut -d '-' -f 1)\* | grep '' && [ $? -eq 0 ] && \
+			rm $(find $unique_tags -iname $(echo $selected_tag | cut -d '-' -f 1)\*)
+	echo $selected_hash > $unique_tags/$selected_tag
+	files_in_selected_hash=$(grep $selected_hash $all_commits_dates_with_file_paths | cut -d ';' -f6)
 	#for more than one file
 	for each_file in $(echo $files_in_selected_hash|tr ',' '\n');
 		do
 			mkdir -p $local_updates/$(dirname $each_file)
 			git show $selected_hash:$each_file>$local_updates/$each_file
-#				for commit_files_present in $updated_file
-
-			echo "$selected_hash;$files_in_selected_hash">>$updated_file
 		done
+
 }
 
 
+function sudoAccess() {
+[ $EUID != 0 ] && sudo -S echo "success" >/dev/null
+}
+
+function apply_updates() {
+	question "Update done. Select 'Ok' to revisit update selection menu. Select 'Cancel to 'Quit' this program"
+	[ $? -eq 1 ] && exit 0
+	call_functions
+}
+
+function call_functions() {
 #Function calls
-clean_up
-check_internet
-format_list_updates
-select_updates
+	clean_up
+	check_internet
+	format_list_updates
+	select_updates
+	sudoAccess
+	apply_updates
+}
+
+# __init__
+call_functions
