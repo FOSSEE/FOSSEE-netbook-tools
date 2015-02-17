@@ -21,7 +21,7 @@
 export supertitle="FOSSEE Netbook Updates"
 source easybashgui
 
-# For global debugging(opens flood gates)
+# For global debugging(open flood gates)
 #set -x
 
 # For local debugging
@@ -73,13 +73,13 @@ function check_internet() {
 		wget $each/$testfile &> /dev/null
 		return_code=$?
 		[ $return_code -eq 0 ] && INET_AVAILABLE=1 && break
-		[ $return_code -eq 1 ] && alert_message $return_code_1 && break
-		[ $return_code -eq 3 ] && alert_message $return_code_3 && break
-		[ $return_code -eq 4 ] && alert_message $return_code_4 && break
-		[ $return_code -eq 5 ] && alert_message $return_code_5 && break
-		[ $return_code -eq 7 ] && alert_message $return_code_7 && break
+		[ $return_code -eq 1 ] && alert_message -w 300 -h 100 $return_code_1 && break
+		[ $return_code -eq 3 ] && alert_message -w 300 -h 100 $return_code_3 && break
+		[ $return_code -eq 4 ] && alert_message -w 300 -h 100 $return_code_4 && break
+		[ $return_code -eq 5 ] && alert_message -w 300 -h 100 $return_code_5 && break
+		[ $return_code -eq 7 ] && alert_message -w 300 -h 100 $return_code_7 && break
 	    done
-	[ $return_code -eq 8 ] && alert_message $return_code_8
+	[ $return_code -eq 8 ] && alert_message -w 300 -h 100 $return_code_8
 }
 
 # ======================================================================================
@@ -110,7 +110,7 @@ function list_updates() {
 function check_past_updates() {
 	# If no new/old update available, just quit (Ignoring HEAD based tags to avoid confusion)
 	no_updates=$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | wc -c)
-	[ $no_updates -eq 0 ] && alert_message "No available updates !!!" && exit 0
+	[ $no_updates -eq 0 ] && alert_message -w 400 -h 250 "No available updates !!!" && exit 0
 	# Look for previously applied updates(git tags)
 	for hash in $(cat unique_tags/*);
 		do
@@ -124,7 +124,7 @@ function check_past_updates() {
 
 function select_updates() {
 	# Show updates using 'menu' of 'easybashgui'
-	selected_update=$(menu -w 1000 -h 550 "$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | \
+	selected_update=$(menu -w 900 -h 550 "$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | \
                          cut -d ';' -f 1,2,3,4,5| tr ';' '  ' )" 2>&1)
 			 [ $? -eq 1 ] && exit 0
 	#get hash for selected_update
@@ -191,16 +191,15 @@ fi
 # ======================================================================================
 
 function apply_updates() {
-	question "Do you want to apply the selected update? This will affect the following file(s):\
-		                     '/$files_in_selected_hash'" 2>&1
+	question -w 400 -h 150 "Do you want to apply the selected update? This will affect the following file(s): '/$files_in_selected_hash'" 2>&1
 	[ $? -eq 1 ] && exit 0
 	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
 		do
 			echo "##### applying updates #####">>$logfile
+			[ ! -d /$each_file ] && mkdir -p $(dirname $each_file)>>$logfile
 			mv -v $local_updates/$each_file /$each_file>>$logfile
 		done
-	question "Update done. Select 'Yes' to revisit update selection menu.
-		  Select 'Cancel' to 'Quit' this program"
+	question -w 400 -h 150 "Update done. Select 'Yes' to revisit update selection menu. Select 'Cancel' to 'Quit' this program"
 	[ $? -eq 1 ] && exit 0
 	call_functions
 }
@@ -208,21 +207,21 @@ function apply_updates() {
 
 # ======================================================================================
 
-#function spl_kernel_manage() {
+function spl_kernel_manage() {
 
 	# environment variables
-#	kernel_image=uzImage.bin
-#	ramdisk_image=initrd.img
-#	boot_part=/dev/mtd4
+	kernel_image=uzImage.bin
+	ramdisk_image=initrd.img
+	boot_part=/dev/mtd4
 
-#	mkbootimg --kernel $kernel_image --ramdisk $ramdisk_image -o /tmp/boot.img
-#       sync
-#        echo 0 > /sys/module/yaffs/parameters/yaffs_bg_enable
-#        flash_erase $boot_part 0 0
-#        nandwrite -p $boot_part /tmp/boot.img
-#	sync
-#        echo 1 > /sys/module/yaffs/parameters/yaffs_bg_enable
-#}
+	mkbootimg --kernel $kernel_image --ramdisk $ramdisk_image -o /tmp/boot.img
+        sync
+        echo 0 > /sys/module/yaffs/parameters/yaffs_bg_enable
+        flash_erase $boot_part 0 0
+        nandwrite -p $boot_part /tmp/boot.img
+	sync
+        echo 1 > /sys/module/yaffs/parameters/yaffs_bg_enable
+}
 
 # ======================================================================================
 
