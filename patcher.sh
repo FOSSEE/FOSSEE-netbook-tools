@@ -111,7 +111,7 @@ function list_updates() {
 function check_past_updates() {
 	# If no new/old update available, just quit (Ignoring HEAD based tags to avoid confusion)
 	no_updates=$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | wc -c)
-	[ $no_updates -eq 0 ] && alert_message -w 400 -h 250 "No available updates !!!" && exit 0
+	[ $no_updates -eq 0 ] && alert_message -w 400 -h 250 "No available updates !!!" && clean_up && exit 0
 	# Look for previously applied updates(git tags)
 	for hash in $(cat unique_tags/*);
 		do
@@ -127,7 +127,7 @@ function select_updates() {
 	# Show updates using 'menu' of 'easybashgui'
 	selected_update=$(menu -w 900 -h 550 "$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | \
                          cut -d ';' -f 1,2,3,4,5| tr ';' '  ' )" 2>&1)
-			 [ $? -eq 1 ] && exit 0
+			 [ $? -eq 1 ] && clean_up && exit 0
 	#get hash for selected_update
 	selected_hash=$(echo $selected_update | grep -o \([0-9a-z]*\) | tr -d '(|)')
 	selected_tag=$(echo $selected_update | grep -o \(tag:\ [A-Za-z0-9._-]*\) | sed 's/(tag:\ //' |sed 's/)//')
@@ -193,7 +193,7 @@ fi
 
 function apply_updates() {
 	question -w 400 -h 150 "Do you want to apply the selected update? This will affect the following file(s): '/$files_in_selected_hash'" 2>&1
-	[ $? -eq 1 ] && exit 0
+	[ $? -eq 1 ] && clean_up && exit 0
 	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
 		do
 			echo "##### applying updates #####">>$logfile
@@ -201,8 +201,8 @@ function apply_updates() {
 			mv -v $local_updates/$each_file /$each_file>>$logfile
 		done
 	question -w 400 -h 150 "Update done. Select 'Yes' to revisit update selection menu. Select 'Cancel' to 'Quit' this program"
-	[ $? -eq 1 ] && exit 0
-	call_functions
+	[ $? -eq 1 ] && clean_up && exit 0
+	main
 }
 
 
