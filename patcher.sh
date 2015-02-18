@@ -53,6 +53,7 @@ return_code_8="Server error. $generic_return_code"
 # =====================================================================================
 
 function clean_up() {
+	wait_seconds 3
 	echo "=========================== New iteration =========================">>$logfile
 	date >> $logfile
 	[ -f $testfile ] && rm -v $testfile>>$logfile
@@ -87,7 +88,7 @@ function check_internet() {
 # Fetch updates if internet is available and formulate a CSV
 function list_updates() {
 	# If internet available just merge the changes (won't update patches automatically)
-	[ $INET_AVAILABLE -eq 1 ] && git pull
+	[ $INET_AVAILABLE -eq 1 ] && git pull &>/dev/null
 	# Create CSV of commits with only tags( git tags are used to group similar patches)
 	git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
 				     $all_commits_one_liner_with_date
@@ -225,7 +226,7 @@ function spl_kernel_manage() {
 
 # ======================================================================================
 
-function call_functions() {
+function main() {
 #Function calls
 	clean_up
 	check_internet
@@ -243,4 +244,4 @@ function call_functions() {
 # ======================================================================================
 
 # __init__
-call_functions
+main
