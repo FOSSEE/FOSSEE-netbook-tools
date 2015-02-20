@@ -161,8 +161,8 @@ function sudo_access() {
 sudo -K
 # The only place 'easybashgui' fails. So adding separate functions for both tty(consoles)
 # and pts(terminals). If tty not found, it returns 1, and 'zenity' is used
-tty | grep tty
-if [ $? -eq 1 ]; then
+
+if [ ! -z $(pidof X) ] ; then
 
 while true
 	do
