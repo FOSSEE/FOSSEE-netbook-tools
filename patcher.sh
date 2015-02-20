@@ -26,15 +26,16 @@ source easybashgui
 
 # For local debugging
 logfile=patcher.log
-
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+echo $DIR
 # Intermediate files/directories. Will be removed after each interation
 testfile=robots.txt
-files_in_all_commits=files_in_all_commits.txt
-all_commits_one_liner_with_date=all_commits_one_liner_with_date.txt
-all_commits_dates_with_file_paths=all_commits_dates_with_file_paths.txt
-past_applied_commits=past_applied_commits.txt
-local_updates=local_updates
-unique_tags=unique_tags
+files_in_all_commits=$DIR/files_in_all_commits.txt
+all_commits_one_liner_with_date=$DIR/all_commits_one_liner_with_date.txt
+all_commits_dates_with_file_paths=$DIR/all_commits_dates_with_file_paths.txt
+past_applied_commits=$DIR/past_applied_commits.txt
+local_updates=$DIR/local_updates
+unique_tags=$DIR/unique_tags
 	[ ! -d $unique_tags ] && mkdir -p $unique_tags
 # Default is no internet
 INET_AVAILABLE=0
@@ -71,7 +72,7 @@ function check_internet() {
 	#wait_for internet
 	for each in {fossee.in,github.com};
 	    do
-		wget $each/$testfile &> /dev/null
+		wget -P $DIR $each/$testfile &> /dev/null
 		return_code=$?
 		[ $return_code -eq 0 ] && INET_AVAILABLE=1 && break
 		[ $return_code -eq 1 ] && alert_message -w 300 -h 100 $return_code_1 && break
