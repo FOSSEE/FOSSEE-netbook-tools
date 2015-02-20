@@ -90,7 +90,7 @@ function list_updates() {
 	# If internet available just merge the changes (won't update patches automatically)
 	#cd $DIR && [ $INET_AVAILABLE -eq 1 ] && git tag -l | xargs git tag -d && git pull &>/dev/null
 	# Create CSV of commits with only tags( git tags are used to group similar patches)
-	#cd $DIR && git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
+	cd $DIR && git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
 				     $all_commits_one_liner_with_date
 	# Find out files in each commit(with tag)
 	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 5 | tr -d '(|)')
