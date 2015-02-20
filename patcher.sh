@@ -24,10 +24,10 @@ source easybashgui
 # For global debugging(open flood gates)
 #set -x
 
-# For local debugging
-logfile=patcher.log
+# Get the PATH of the running script
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-echo $DIR
+# For local debugging
+logfile=$DIR/patcher.log
 # Intermediate files/directories. Will be removed after each interation
 testfile=robots.txt
 files_in_all_commits=$DIR/files_in_all_commits.txt
@@ -54,7 +54,6 @@ return_code_8="Server error. $generic_return_code"
 # =====================================================================================
 
 function clean_up() {
-	wait_seconds 3
 	echo "=========================== New iteration =========================">>$logfile
 	date >> $logfile
 	[ -f $testfile ] && rm -v $testfile>>$logfile
@@ -89,9 +88,9 @@ function check_internet() {
 # Fetch updates if internet is available and formulate a CSV
 function list_updates() {
 	# If internet available just merge the changes (won't update patches automatically)
-	[ $INET_AVAILABLE -eq 1 ] && git tag -l | xargs git tag -d && git pull &>/dev/null
+	#cd $DIR && [ $INET_AVAILABLE -eq 1 ] && git tag -l | xargs git tag -d && git pull &>/dev/null
 	# Create CSV of commits with only tags( git tags are used to group similar patches)
-	git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
+	#cd $DIR && git log  --pretty=\;\(%ar\)\;%d\;%s\;\(%h\) --no-walk --tags >\
 				     $all_commits_one_liner_with_date
 	# Find out files in each commit(with tag)
 	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 5 | tr -d '(|)')
@@ -212,8 +211,8 @@ function apply_updates() {
 function spl_kernel_manage() {
 
 	# environment variables
-	kernel_image=uzImage.bin
-	ramdisk_image=initrd.img
+	kernel_image=$DIR/uzImage.bin
+	ramdisk_image=$DIR/initrd.img
 	boot_part=/dev/mtd4
 
 	mkbootimg --kernel $kernel_image --ramdisk $ramdisk_image -o /tmp/boot.img
@@ -230,7 +229,7 @@ function spl_kernel_manage() {
 function main() {
 #Function calls
 	clean_up
-	check_internet
+	#check_internet
 	list_updates
 	check_past_updates
 	select_updates
