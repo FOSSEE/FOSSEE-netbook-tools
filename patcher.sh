@@ -150,7 +150,7 @@ function generate_commit_files() {
 		do
 			mkdir -p $local_updates/$(dirname $each_file)
 			git show $selected_hash:$each_file>$local_updates/$each_file
-			echo "$selected_hash,$selected_tag">>$logfile
+			#echo "$selected_hash,$selected_tag">>$logfile
 		done
 }
 
@@ -197,7 +197,7 @@ function apply_updates() {
 	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
 		do
 			echo "##### applying updates #####">>$logfile
-			[ ! -d /$each_file ] && mkdir -p $(dirname $each_file)>>$logfile
+			[ ! -d /$(dirname each_file) ] && mkdir -vp $(dirname $each_file)>>$logfile
 			mv -v $local_updates/$each_file /$each_file>>$logfile
 		done
 	question -w 400 -h 150 "Update done. Select 'Yes' to revisit update selection menu. Select 'Cancel' to 'Quit' this program"
