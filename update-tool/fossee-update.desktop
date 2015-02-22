@@ -2,9 +2,9 @@
 Keywords=FOSSEE updates
 Name=FOSSEE-updates
 Comment=FOSSEE updates
-Exec=bash /opt/FOSSEE-netbook-patcher/init.sh
+Exec=bash /opt/FOSSEE-netbook-tools/update-tool/init.sh
 #Exec=lxterminal --working-directory=/opt/FOSSEE-netbook-patcher -e /opt/FOSSEE-netbook-patcher/patcher.sh >/dev/null 2>&1
-Icon=/opt/FOSSEE-netbook-patcher/patcher.png
+Icon=/opt/FOSSEE-netbook-tools/update-tool/patcher.png
 Terminal=false
 Type=Application
 MimeType=text/plain
