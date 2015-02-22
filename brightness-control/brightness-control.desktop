@@ -1,0 +1,11 @@
+[Desktop Entry]
+Keywords=Brightness control
+Name=Brightness toggle
+Comment=Brightness control
+Exec=bash /opt/FOSSEE-netbook-tools/brightness-control/brightness-control.sh
+Icon=/opt/FOSSEE-netbook-tools/brightness-control/brightness-icon.png
+#Icon=/usr/share/icons/hicolor/scalable/status/xfpm-brightness-lcd.svg
+Terminal=false
+Type=Application
+MimeType=text/plain
+Categories=GTK;Other;
