@@ -95,7 +95,7 @@ function list_updates() {
 	# Find out files in each commit(with tag)
 	for each in $(cat $all_commits_one_liner_with_date | cut -d ';' -f 5 | tr -d '(|)')
 	    do
-		files_in_each_commit=$(git show --first-parent --pretty="format:" --name-only $each)
+		files_in_each_commit=$(cd $DIR && git show --first-parent --pretty="format:" --name-only $each)
 		echo $files_in_each_commit | tr ' ' ',' >> $files_in_all_commits
 	    done
 	# Create a file with [Not Updated] flag on the first column for all the tags, we will
@@ -111,7 +111,7 @@ function list_updates() {
 function check_past_updates() {
 	# If no new/old update available, just quit (Ignoring HEAD based tags to avoid confusion)
 	no_updates=$(cat $all_commits_dates_with_file_paths | sed '/HEAD/d' | wc -c)
-	[ $no_updates -eq 0 ] && alert_message -w 400 -h 250 "No available updates !!!" && exit 0
+	[ $no_updates -eq 0 ] && alert_message -w 400 -h 250 "No updates available !!!" && exit 0
 	# Look for previously applied updates(git tags)
 	for hash in $(cat unique_tags/*);
 		do
@@ -148,8 +148,8 @@ function generate_commit_files() {
 	# For more than one file in a commit
 	for each_file in $(echo $files_in_selected_hash|tr ',' '\n');
 		do
-			mkdir -p $local_updates/$(dirname $each_file)
-			git show $selected_hash:$each_file>$local_updates/$each_file
+		 	mkdir -pv $local_updates/$(dirname $each_file)>>$logfile
+			cd $DIR && git show $selected_hash:$each_file>$local_updates/$each_file
 			#echo "$selected_hash,$selected_tag">>$logfile
 		done
 }
@@ -166,7 +166,7 @@ if [ ! -z $(pidof X) ] ; then
 
 while true
 	do
-		password=$(zenity --title "Enter your password to continue" --password)
+		password=$(zenity --title "FOSSEE Netbook Updates" --password)
 		# zenity dialog button 'Cancel' returns 1, and 'Yes' returns 0.
 		[ $? -eq 1 ] && exit 0
 		echo $password | sudo -S echo "test">/dev/null
@@ -177,7 +177,7 @@ else
 
 while true
 	do
-		password=$(dialog --title "Password" \
+		password=$(dialog --title "FOSSEE Netbook Updates" \
                   --clear \
                   --passwordbox "Enter your password" 10 30 \
                   --stdout)
@@ -192,16 +192,16 @@ fi
 # ======================================================================================
 
 function apply_updates() {
-	question -w 400 -h 150 "Do you want to apply the selected update? This will affect the following file(s): '/$files_in_selected_hash'" 2>&1
+	question -w 400 -h 150 "Do you want to apply the selected update?\\nThis may install/update the following file(s): '/$files_in_selected_hash'" 2>&1
 	[ $? -eq 1 ] && exit 0
 	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
 		do
 			echo "##### applying updates #####">>$logfile
-			[ ! -d /$(dirname each_file) ] && mkdir -vp $(dirname $each_file)>>$logfile
-			mv -v $local_updates/$each_file /$each_file>>$logfile
+			[ -d /$(dirname each_file) ] && sudo mkdir -pv $(dirname /$each_file)>>$logfile;
+			sudo mv -v $local_updates/$each_file /$each_file>>$logfile
 		done
-	question -w 400 -h 150 "Update done. Select 'Yes' to revisit update selection menu. Select 'Cancel' to 'Quit' this program"
-	[ $? -eq 1 ] && exit 0
+	question -w 400 -h 150 "Successfully Updated!\\n\\nSelect 'Yes' to close this application. Select 'Cancel' to relaunch update selection menu"
+	[ $? -eq 0 ] && exit 0
 	main
 }
 
@@ -229,6 +229,7 @@ function spl_kernel_manage() {
 function main() {
 #Function calls
 	clean_up
+	# Next function is handled by init.sh script in same directory
 	#check_internet
 	list_updates
 	check_past_updates
