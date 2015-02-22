@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Keywords=Probe HDMI
+Name=Probe HDMI
+Comment=Probe HDMI
+Exec=bash /opt/FOSSEE-netbook-tools/probe-hdmi/probe-hdmi.sh &
+Icon=/opt/FOSSEE-netbook-tools/probe-hdmi/hdmi.png
+Terminal=false
+Type=Application
+MimeType=text/plain
+Categories=GTK;Other;
