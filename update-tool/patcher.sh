@@ -192,7 +192,8 @@ fi
 # ======================================================================================
 
 function apply_updates() {
-	question -w 400 -h 150 "Do you want to apply the selected update?\\nThis may install/update the following file(s): '/$files_in_selected_hash'" 2>&1
+	#question -w 400 -h 150 "Do you want to apply the selected update?\\nThis may install/update the following file(s): '/$files_in_selected_hash'" 2>&1
+	question -w 400 -h 150 "Do you want to apply the selected update?\\nThis may install/update the following file(s):\\n\\n $(for each in $(echo $files_in_selected_hash | tr ',' '\n');do echo /$each; done)" 2>&1
 	[ $? -eq 1 ] && exit 0
 	for each_file in $(echo $files_in_selected_hash | tr ',' '\n');
 		do
