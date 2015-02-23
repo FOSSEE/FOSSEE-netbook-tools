@@ -63,7 +63,12 @@ function try_lightdm_restart() {
         while true;
 	 do
            	sudo service lightdm restart
-                [ $(service lightdm status|grep -o start) == 'start' ] && break
+	        grep "(EE) FBDEV(0): mmap fbmem: Invalid argument" /var/log/Xorg.0.log
+		return_code_grep=$?
+              # [ $(service lightdm status|grep -o start) == 'start' ] && break
+	      # If return code is 0 means the error exist in Xorg file, i.e, Xorg failed,
+	      #	 so do restart, if its 1 means X might have restarted properly
+                [ $return_code_grep -eq 1 ] && break
         done
 	#killall probe_hdmi.sh
 }
