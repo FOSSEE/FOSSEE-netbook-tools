@@ -17,6 +17,9 @@
 # programs, which can be modified to work with other libraries too
 
 source easybashgui
+export supertitle="Probe HDMI"
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 #Paths
 fb1=/etc/X11/xorg.conf.fb1
@@ -31,7 +34,7 @@ if [ ! -z $(pidof X) ] ; then
 
 while true
         do
-                password=$(zenity --title "Enter your password to continue" --password)
+                password=$(zenity --title "Probe HDMI" --password)
                 # zenity dialog button 'Cancel' returns 1, and 'Yes' returns 0.
                 [ $? -eq 1 ] && exit 0
                 echo $password | sudo -S echo "test">/dev/null
@@ -73,7 +76,12 @@ function probe_hdmi() {
 kernel_resolution=$(cat /sys/class/graphics/fb1/modes | cut -d ':' -f2 | cut -d '-' -f1)
 
 if [ $kernel_resolution == '1024x720p' ] && [ ! -f $xorg ]; then
-return_code_A=$(question -w 800 -h 200 "There are two possible settings, A and B. You are in Setting-(A) (default setting): You may need to connect the HDMI/HDMI-to-VGA cable to netbook and restart once.\\n\\nHDMI might work in setting-(A) with thick bottom bar.\\n The setting-(B) will make your bottom panel unvailable on netbook screen, but HDMI might work in full screen. \\nYour desktop will be reloaded, hence save your files. Select 'Ok' to try setting-(B), select 'Cancel' to continue Setting-(A). \\nYou may change from setting-(B) to setting-(A) anytime by revisiting this application" 2>&1)
+
+message -w 500 -h 400 "There are two possible settings, A and B. You are in Setting-A (default setting).\\nIt is recommended to connect HDMI/HDMI-to-VGA cable to netbook and restart. HDMI might work with thick bottom bar.\\n Select 'Ok' to continue"
+
+
+return_code_A=$(question -w 600 -h 300 "If setting-A doesn't work, you may try setting-B. The setting-B will make your bottom panel unavailable on netbook screen, but HDMI might work in full screen mode. Your desktop will be reloaded.\\nSelect 'Ok' to try setting-B, select 'Cancel' to continue Setting-A. \\nYou may change from setting-B to setting-A anytime by revisiting this application." 2>&1)
+
 [ $return_code_A -eq 1 ] &&  exit 0
 sudo cp -v $fb1 $xorg
 try_lightdm_restart
@@ -83,7 +91,7 @@ fi
 # ---------------------------------------------------------------------------------
 
 if [ $kernel_resolution == '1024x720p' ] && [ -f $xorg ]; then
-return_code_B=$(question -w 350 -h 250 "You are in setting-(B): Do you wish to change to setting-(A)(default setting)? Select 'Ok' to switch to setting-(A). Select 'Cancel' to continue setting-(B)" 2>&1)
+return_code_B=$(question -w 350 -h 250 "You are in setting-B.\\nDo you wish to switch to setting-A(default setting)? Select 'Ok' to switch to setting-A(desktop will be reloaded). Select 'Cancel' to continue setting-B" 2>&1)
 [ $return_code_B -eq 1 ] && exit 0
 sudo rm -v $xorg
 try_lightdm_restart
