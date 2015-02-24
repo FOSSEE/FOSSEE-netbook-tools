@@ -62,10 +62,10 @@ fi
 function try_lightdm_restart() {
         while true;
 	 do
-           	sudo restart lightdm
+           	sudo service lightdm restart
                 [ $(service lightdm status|grep -o start) == 'start' ] && break
         done
-	killall probe_hdmi.sh
+	#killall probe_hdmi.sh
 }
 
 
@@ -77,7 +77,7 @@ kernel_resolution=$(cat /sys/class/graphics/fb1/modes | cut -d ':' -f2 | cut -d 
 
 if [ $kernel_resolution == '1024x720p' ] && [ ! -f $xorg ]; then
 
-message -w 500 -h 400 "There are two possible settings, A and B. You are in Setting-A (default setting).\\nIt is recommended to connect HDMI/HDMI-to-VGA cable to netbook and restart. HDMI might work with thick bottom bar.\\n Select 'Ok' to continue"
+message -w 500 -h 400 "There are two possible settings, A and B. You are in Setting-A (default setting).\\nIt is recommended to connect HDMI/HDMI-to-VGA cable to netbook and restart. HDMI might work with thick bottom bar. You can also use this application through console by typing 'probehdmi'.\\n Select 'Ok' to continue"
 
 
 return_code_A=$(question -w 600 -h 300 "If setting-A doesn't work, you may try setting-B. The setting-B will make your bottom panel unavailable on netbook screen, but HDMI might work in full screen mode. Your desktop will be reloaded.\\nSelect 'Ok' to try setting-B, select 'Cancel' to continue Setting-A. \\nYou may change from setting-B to setting-A anytime by revisiting this application." 2>&1)
