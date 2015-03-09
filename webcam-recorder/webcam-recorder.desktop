@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Keywords=Webcam Recorder
+Name=Webcam Recorder
+Comment=Webcam Recorder
+Exec=bash /opt/FOSSEE-netbook-tools/webcam-recorder/webcam-recorder.sh
+Icon=/opt/FOSSEE-netbook-tools/webcam-recorder/webcam-recorder.png
+Terminal=false
+Type=Application
+MimeType=text/plain
+Categories=GTK;Other;
