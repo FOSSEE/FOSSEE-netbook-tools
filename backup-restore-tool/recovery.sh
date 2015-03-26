@@ -4,10 +4,10 @@
 boot_part=/dev/mtd4
 rootfs_mtd_num=5
 rootfs_part=/dev/mtd${rootfs_mtd_num}
-ubuntu_dir=ubuntu_rootfs
-ubuntu_file=/mnt/mmcblk0p1/recovery_images/ubuntu14.04.tar
-kernel_image=/mnt/mmcblk0p1/recovery_images/uzImage.bin
-ramdisk_image=/mnt/mmcblk0p1/recovery_images/initrd.img
+ubuntu_dir=/nand_previous
+ubuntu_file=/sd_card/recovery.tgz
+kernel_image=/sd_card/uzImage.bin
+ramdisk_image=/sd_card/initrd.img
 
 
 #This is the recovery script used to re-install or recover the FOSSEE-OS.
@@ -70,19 +70,26 @@ fi
 installation()
 {
     
-   # echo "The installation will take place here"
+   echo "The installation will take place here"
    # exit 0
-    flash_erase $rootfs_part 0 0
-    ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num
-    ubimkvol /dev/ubi0 -N rootfs -m
-    mount -t ubifs ubi0_0 $ubuntu_dir 
-    tar xvvf $ubuntu_file -C $ubuntu_dir
-    sync
-    mode=$(fbset | grep geometry | cut -c5- | cut -d\ -f2,3 | tr \ x)
-    sed -i "s/MODE_ANY/$mode/g" ${ubuntu_dir}/etc/X11/xorg.conf
-    sync
+   flash_erase $rootfs_part 0 0
+   ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num
+   ubimkvol /dev/ubi0 -N ubuntu-rootfs -m
+   mount -t ubifs ubi0_0 $ubuntu_dir
+   mkdir /tmp/recovery-img
+   mkdir /tmp/recovery-contents 
+   tar xvvf $ubuntu_file -C /tmp/recovery-image
+   mount /tmp/recovery-image/recovery.img /tmp/recovery-contents
+   cp -a /tmp/recovery-contents/* $ubuntu_dir
+   sync
+  # mode=$(fbset | grep geometry | cut -c5- | cut -d\ -f2,3 | tr \ x)
+  # sed -i "s/MODE_ANY/$mode/g" ${ubuntu_dir}/etc/X11/xorg.conf
+   sync
 
-    umount $ubuntu_dir
+   umount $ubuntu_dir
+  #  /bin/sh 
+   echo "Installation complete"
+   reboot
     
 }
 #This functions presents the user with advanecd options where he/she can backup their data from previous installation or repair the current installation through shell prompt.
