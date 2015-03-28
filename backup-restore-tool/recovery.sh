@@ -5,7 +5,7 @@ boot_part=/dev/mtd4
 rootfs_mtd_num=5
 rootfs_part=/dev/mtd${rootfs_mtd_num}
 ubuntu_dir=/nand_previous
-ubuntu_file=/sd_card/recovery.tgz
+ubuntu_file=/sd_card/recovery.img
 kernel_image=/sd_card/uzImage.bin
 ramdisk_image=/sd_card/initrd.img
 
@@ -14,52 +14,58 @@ ramdisk_image=/sd_card/initrd.img
 
 #This is initial function which is called, also this is the first screen that comes up in this process.
 #Seq-1
+image()
+{
+echo "  ==========================================================================================================================="
+echo "||                                                                                                                           ||"
+echo "||                                                   FOSSEE NOTEBOOK                                                         ||"
+echo "||                                                     INSTALLER                                                             ||"
+echo "||                                                                                                                           ||"
+echo "||                                                                                                                           ||"
+echo "||                                                                                                                           ||"
+echo "  ===========================================================================================================================" 
+echo ""
+echo ""
+echo ""
+}
 
 init()
 {
-echo "-----------------------------------------------------------------------------------------------------------------"
-echo "|                                                                                                     |"
-echo "|                                      FOSSEE NOTEBOOK                                                |"
-echo "|                                          INSTALLER                                                  |"
-echo "|                                                                                                     |"
-echo "|                                                                                                     |"
-echo "|                                                                                                     |"
-echo "------------------------------------------------------------------------------------------------------------------" 
-echo ""
-echo ""
-echo ""
-printf "Press [A/a] to go to advanced options or [I/i] to re-install the FOSSEE-OS?"
-read choose_key
+printf "\t\tPress [A/a] to go to advanced options or [I/i] to re-install the FOSSEE-OS?"
+read -s -n 1 choose_key
 if [ $choose_key = "A" ] || [ $choose_key = "a" ]; then
     advanced
 elif [ $choose_key = "I" ] || [ $choose_key = "i" ]; then
-    echo "Installing a fresh copy of FOSSEE-OS operating system in ..." #Include the time remaining
-    for i in 5 4 3 2 1;
-    do
-	echo "$i secs"
-	sleep 1
-    done
     install
+elif [ $choose_key = "" ] || [ $choose_key = " " ]; then
+    echo ""
+    echo -e "\t\tPlease enter a valid choice"
+    init
 else
-    echo "Please enter a valid choice"
+    echo ""
+    echo -e "\t\tPlease enter a valid choice"
     init
 fi
 }
 
-#This function validates his choice of re-installation.
+#This function validates the users choice of re-installation.
 #Seq- 1->I->2
 
 install()
 {
 echo ""
-printf " Do you want to continue with the installation? Press [Y/y] to continue, [N/n] to go back to the previous menu."
+printf "\t\tDo you want to continue with the installation?\n"
+printf "\t\tPress [Y/y] to continue, [N/n] to go back to the previous menu."
 read key
 if [ $key = "Y" ] || [ $key = "y" ]; then
     installation
 elif [ $key = "N" ] || [ $key = "n" ]; then
+    /mnt/busybox clear
+    image
     init
 else
-    echo "Please enter a valid choice"
+    echo ""
+    echo -e "\t\tPlease enter a valid choice"
     install
 fi
 }
@@ -70,26 +76,50 @@ fi
 installation()
 {
     
-   echo "The installation will take place here"
+    echo ""
+    echo ""
+    echo -e "\t\tThe installation is underway, do not exit..."
    # exit 0
-   flash_erase $rootfs_part 0 0
-   ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num
-   ubimkvol /dev/ubi0 -N ubuntu-rootfs -m
-   mount -t ubifs ubi0_0 $ubuntu_dir
-   mkdir /tmp/recovery-img
-   mkdir /tmp/recovery-contents 
-   tar xvvf $ubuntu_file -C /tmp/recovery-image
-   mount /tmp/recovery-image/recovery.img /tmp/recovery-contents
-   cp -a /tmp/recovery-contents/* $ubuntu_dir
-   sync
-  # mode=$(fbset | grep geometry | cut -c5- | cut -d\ -f2,3 | tr \ x)
-  # sed -i "s/MODE_ANY/$mode/g" ${ubuntu_dir}/etc/X11/xorg.conf
-   sync
+    mkdir $ubuntu_dir
 
-   umount $ubuntu_dir
-  #  /bin/sh 
-   echo "Installation complete"
-   reboot
+ #   mkdir /sd_card  "enable these two lines in production" 
+ #   mount /dev/mmcblk0p1 /sd_card
+
+    if [ $(echo $?) -eq 0 ]; then
+      flash_erase $rootfs_part 0 0 > /dev/null
+    else 
+      echo -e"\t\tSD card not mounted"
+      sleep 3
+      exit 0
+    fi
+    ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num > /dev/null
+    ubimkvol /dev/ubi0 -N ubuntu-rootfs -m > /dev/null
+    if [ $(echo $?) -eq 0 ]; then
+      mount -t ubifs ubi0_0 $ubuntu_dir
+    else
+      echo -e "\t\tubimkvol failed"
+      sleep 3
+      exit 0
+    fi 
+    mkdir /tmp/recovery-contents 
+    mount /sd_card/recovery.img /tmp/recovery-contents
+    #Insert progress bar here.
+    cp -a /tmp/recovery-contents/* /nand_previous
+    sync
+
+    umount $ubuntu_dir
+   # /bin/sh
+    echo "" 
+    echo -e "\t\tInstallation complete."
+    sleep 2
+    echo ""
+    printf "\t\tPress ENTER to restart.[ Please remove the SD card first ]"
+    read read_restart
+    if $read_restart; then
+      reboot
+    else
+      echo "It shouldn't come here"
+    fi
     
 }
 #This functions presents the user with advanecd options where he/she can backup their data from previous installation or repair the current installation through shell prompt.
@@ -97,24 +127,29 @@ installation()
 
 advanced()
 {
-echo "Trying to access previous installation"
-printf "Mounting SD card"
-mkdir /sd_card
-mount /dev/mmcblk0p1 /sd_card
-for i in `seq 1 10`
+#This will detect the previous mtd partiton.
+prev_mtd_part=$(cat /proc/mtd | grep "ubuntu-rootfs" | cut -b 4) 
+echo -e "\t\tTrying to access previous installation"
+printf "\t\tMounting SD card"
+#mkdir /sd_card
+#mount /dev/mmcblk0p1 /sd_card
+for i in `seq 1 2`
   do
     printf "."
-    sleep 1s
+    sleep 1
   done
 echo ""
-echo "You may backup your essential files and folders or repair your previous installation. This will now fallback to a command prompt"
+echo -e "\t\tYou may backup your essential files and folders or repair your previous installation.\n
+\t\tThis will now fallback to a command prompt"
 #This will take the user to his previous installation.
-mkdir /nand_previous
-ubiattach /dev/ubi_ctrl -m 5
+mkdir -p /nand_previous
+ubiattach /dev/ubi_ctrl -m $prev_mtd_part
+#ubimkvol /dev/ubi0 -N ubuntu-rootfs -m
 mount -t ubifs ubi0_0 /nand_previous 
-sleep 7
+/mnt/busybox clear
 /bin/sh
-umount /nand_previous
+#umount /dev/mmcblk0p1
+/mnt/busybox clear
 reinstall
 }
 
@@ -123,23 +158,35 @@ reinstall
 
 reinstall()
 {
-printf "Do you want to reinstall the FOSSEE operating system?[Y/N]"
+echo ""
+echo ""
+printf "\t\tDo you want to reinstall the FOSSEE operating system?[Y/N]"
 read RET
 if [ "$RET" = "Y" ] || [ "$RET" = "y" ]; then
+    umount /nand_previous
+    ubidetach -d 0 /dev/ubi_ctrl 
+
+    rmdir /nand_previous
     install
 elif [ "$RET" = "N" ] || [ "$RET" = "n" ]; then
-    printf "Remove SD card. This machine will reboot in..."
-    for i in 4 3 2 1
-    do
-        echo "$i secs"
-        sleep 1
-    done
-    reboot
+    umount /nand_previous
+    printf "\t\tPress ENTER to reboot. [ Please remove the SD card first ]"
+    read $restart_key
+    if $restart_key; then
+        reboot
+    else
+        echo "It should not come here."
+    fi
+    
+        
+       
+
+
 else
     echo "Please enter a valid choice"
     reinstall
 fi
 }
-
+image
 init
    
