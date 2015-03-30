@@ -5,7 +5,6 @@ boot_part=/dev/mtd4
 rootfs_mtd_num=5
 rootfs_part=/dev/mtd${rootfs_mtd_num}
 ubuntu_dir=/nand_previous
-ubuntu_file=/sd_card/recovery.img
 kernel_image=/sd_card/uzImage.bin
 ramdisk_image=/sd_card/initrd.img
 
@@ -16,10 +15,14 @@ ramdisk_image=/sd_card/initrd.img
 #Seq-1
 image()
 {
+echo ""
+echo ""
 echo "  ==========================================================================================================================="
 echo "||                                                                                                                           ||"
-echo "||                                                   FOSSEE NOTEBOOK                                                         ||"
-echo "||                                                     INSTALLER                                                             ||"
+echo "||                                                                                                                           ||"
+echo "||                                                                                                                           ||"
+echo "||                                                     FOSSEE NOTEBOOK                                                       ||"
+echo "||                                                       INSTALLER                                                           ||"
 echo "||                                                                                                                           ||"
 echo "||                                                                                                                           ||"
 echo "||                                                                                                                           ||"
@@ -54,9 +57,10 @@ fi
 install()
 {
 echo ""
+echo ""
 printf "\t\tDo you want to continue with the installation?\n"
 printf "\t\tPress [Y/y] to continue, [N/n] to go back to the previous menu."
-read key
+read -s -n 1 key
 if [ $key = "Y" ] || [ $key = "y" ]; then
     installation
 elif [ $key = "N" ] || [ $key = "n" ]; then
@@ -101,10 +105,11 @@ installation()
       sleep 3
       exit 0
     fi 
-    mkdir /tmp/recovery-contents 
-    mount /sd_card/recovery.img /tmp/recovery-contents
-    #Insert progress bar here.
-    cp -a /tmp/recovery-contents/* /nand_previous
+   # mkdir /tmp/recovery-contents 
+   # mount /sd_card/recovery.img /tmp/recovery-contents
+   #Insert progress bar here.
+   # cp -a /tmp/recovery-contents/* /nand_previous
+    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
     sync
 
     umount $ubuntu_dir
@@ -129,6 +134,8 @@ advanced()
 {
 #This will detect the previous mtd partiton.
 prev_mtd_part=$(cat /proc/mtd | grep "ubuntu-rootfs" | cut -b 4) 
+echo ""
+echo ""
 echo -e "\t\tTrying to access previous installation"
 printf "\t\tMounting SD card"
 #mkdir /sd_card
@@ -160,12 +167,12 @@ reinstall()
 {
 echo ""
 echo ""
+image
 printf "\t\tDo you want to reinstall the FOSSEE operating system?[Y/N]"
 read RET
 if [ "$RET" = "Y" ] || [ "$RET" = "y" ]; then
     umount /nand_previous
     ubidetach -d 0 /dev/ubi_ctrl 
-
     rmdir /nand_previous
     install
 elif [ "$RET" = "N" ] || [ "$RET" = "n" ]; then
@@ -177,11 +184,6 @@ elif [ "$RET" = "N" ] || [ "$RET" = "n" ]; then
     else
         echo "It should not come here."
     fi
-    
-        
-       
-
-
 else
     echo "Please enter a valid choice"
     reinstall
