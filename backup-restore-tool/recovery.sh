@@ -86,8 +86,8 @@ installation()
    # exit 0
     mkdir $ubuntu_dir
 
- #   mkdir /sd_card  "enable these two lines in production" 
- #   mount /dev/mmcblk0p1 /sd_card
+    mkdir /sd_card  
+    mount /dev/mmcblk0p1 /sd_card
 
     if [ $(echo $?) -eq 0 ]; then
       flash_erase $rootfs_part 0 0 > /dev/null
@@ -105,10 +105,7 @@ installation()
       sleep 3
       exit 0
     fi 
-   # mkdir /tmp/recovery-contents 
-   # mount /sd_card/recovery.img /tmp/recovery-contents
    #Insert progress bar here.
-   # cp -a /tmp/recovery-contents/* /nand_previous
     sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
     sync
 
@@ -118,6 +115,7 @@ installation()
     echo -e "\t\tInstallation complete."
     sleep 2
     echo ""
+    umount /dev/mmcblk0p1
     printf "\t\tPress ENTER to restart.[ Please remove the SD card first ]"
     read read_restart
     if $read_restart; then
@@ -138,8 +136,8 @@ echo ""
 echo ""
 echo -e "\t\tTrying to access previous installation"
 printf "\t\tMounting SD card"
-#mkdir /sd_card
-#mount /dev/mmcblk0p1 /sd_card
+mkdir /sd_card
+mount /dev/mmcblk0p1 /sd_card
 for i in `seq 1 2`
   do
     printf "."
@@ -155,7 +153,6 @@ ubiattach /dev/ubi_ctrl -m $prev_mtd_part
 mount -t ubifs ubi0_0 /nand_previous 
 /mnt/busybox clear
 /bin/sh
-#umount /dev/mmcblk0p1
 /mnt/busybox clear
 reinstall
 }
@@ -172,8 +169,10 @@ printf "\t\tDo you want to reinstall the FOSSEE operating system?[Y/N]"
 read RET
 if [ "$RET" = "Y" ] || [ "$RET" = "y" ]; then
     umount /nand_previous
+    umount /dev/mmcblk0p1
     ubidetach -d 0 /dev/ubi_ctrl 
     rmdir /nand_previous
+    rmdir /sd_card
     install
 elif [ "$RET" = "N" ] || [ "$RET" = "n" ]; then
     umount /nand_previous
