@@ -11,7 +11,7 @@ ramdisk_image=/sd_card/initrd.img
 
 #This is the recovery script used to re-install or recover the FOSSEE-OS.
 
-#This is initial function which is called, also this is the first screen that comes up in this process.
+#This is the initial function which is called, also this is the first screen that comes up in this process.
 #Seq-1
 image()
 {
@@ -85,9 +85,10 @@ installation()
     echo -e "\t\tThe installation is underway, do not exit..."
    # exit 0
     mkdir $ubuntu_dir
-
-    mkdir /sd_card  
-    mount /dev/mmcblk0p1 /sd_card
+   
+   # This part is taken care of in lib/debian-installer/menu file.
+   # mkdir /sd_card  
+   # mount /dev/mmcblk0p1 /sd_card
 
     if [ $(echo $?) -eq 0 ]; then
       flash_erase $rootfs_part 0 0 > /dev/null
@@ -136,8 +137,8 @@ echo ""
 echo ""
 echo -e "\t\tTrying to access previous installation"
 printf "\t\tMounting SD card"
-mkdir /sd_card
-mount /dev/mmcblk0p1 /sd_card
+#mkdir /sd_card
+#mount /dev/mmcblk0p1 /sd_card
 for i in `seq 1 2`
   do
     printf "."
