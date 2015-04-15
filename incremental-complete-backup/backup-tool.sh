@@ -73,13 +73,14 @@ then
 exit 0
 else
 # This will return size of disk without our media
+umount /media/$USER/*  # to unmount all external media.
 sizeofDiskBeforeSDCARD=$(echo $password | sudo -S sfdisk -s\
 | tail -1 | awk '{print $2}')
 fi
 }
 # ------------------------------------------------------------#
 # Prompt a dialog box asking user to connect the required     #
-# media stores the size of disk after inserting the media     #
+# media & stores the size of disk after inserting the media   #
 # on $sizeofDiskAfterSDCARD.                                  #
 # ------------------------------------------------------------#
 insertSDCARD() {
@@ -129,7 +130,7 @@ fi
 ###################################################################################
 # Execution starts here.
 
-zenity --width=600 --height=200 --info --text "You need an 8Gb or above external storage device (sdcard /pendrive) to continue"
+zenity --width=600 --height=200 --info --text "You need an 8GB or above external storage device (sdcard /pendrive) to continue"
 sudoAccess
 removeSDCARD
 insertSDCARD
@@ -139,16 +140,27 @@ case "${result}" in
     "1" ) #Incremental
         selection_menu "Incremental Backup options" "Continue with previous backup storage[if you have a previous incremental backup] " "Create a new backup by formating the storage"
         case "${result}" in
-                "1" ) #continue rsync the storage
-                        echo "rsync"
+                "1" ) # check for mac_id matching & proceed to rsync
+                        rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
+                        mac_id=`cat /sys/class/net/eth0/address`     # macid of the machine
+                        if [ "$rootfs_path" == "" ] || [ "$mac_id" -ne `cat $rootfs_path/opt/.Hw_addr.txt` ];
+                        then
+                            zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
+                        else
+#                            rsync -avzr / $rootfs_path 
+			fi
                         ;;
                 "2" ) #start new rsync
+                        cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
+                        umount /media/$USER/*
+                        echo $password
                         echo "start inc Bkup"
                         ;;
         esac
-        ;;#Complete 
-    "2" )
+        ;;
+    "2" ) #Complete 
         echo "Do a complete Backup"
+        sudo tar -cpzf /media/student/<sdcard>/FirmwareInstall/ubuntu/ubuntu13.04.tar --one-file-system /
         ;;
 esac
 
