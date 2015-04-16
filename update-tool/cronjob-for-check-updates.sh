@@ -15,7 +15,7 @@ return_text=$(git fetch --tags --dry-run 2>&1)
 # Check for return code, it will be 0 if internet is available
 [ $? -eq 0 ] && [ $(echo $return_text|wc -l) -ge 1 ] && \
 
-sudo -u $user /usr/bin/notify-send -i "path/to//opt/FOSSEE-netbook-tools/update-tool/patcher.png" \
+sudo -u $user /usr/bin/notify-send -i "/opt/FOSSEE-netbook-tools/update-tool/patcher.png" \
 "FOSSEE Updates available" \
 "menu -> FOSSEE-Tools -> FOSSEE-updates"
 
