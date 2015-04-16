@@ -1,4 +1,4 @@
-:!/bin/bash
+#!/bin/bash
 #***********************************************#
 #  Gui tool to create backups of FOSSEE laptop  #
 #	to external storage media.              #
@@ -125,7 +125,20 @@ exit 0
 fi
 fi
 }
-
+# ------------------------------------------------------------#
+# unmount the mounted partitions, create new partition table  #
+# format 1st partition to vfat, 2nd to ext4 and mount under   #
+# /mnt                                                        #
+# ------------------------------------------------------------#
+formatExternalmedia() {
+umount /media/$USER/*
+echo $password |sudo -S mkdir -p /mnt/boot /mnt/rootfs
+echo -e "o\nn\np\n1\n\n+100M\nn\np\n2\n\n\nw"|sudo fdisk /dev/$dev_name  # delete old partition table and creating new
+sudo mkfs.vfat /dev/$dev_name*1
+sudo mkfs -t ext4 /dev/$dev_name*2
+sudo mount /dev/$dev_name*1 /mnt/boot
+sudo mount /dev/$dev_name*2 /mnt/rootfs
+}
 
 ###################################################################################
 # Execution starts here.
@@ -144,25 +157,36 @@ case "${result}" in
                 "1" ) # check for mac_id matching & proceed to rsync
                         rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
                         mac_id=`cat /sys/class/net/eth0/address`     # macid of the machine
-                        if [ "$rootfs_path" == "" ] || [ "$mac_id" -ne `cat $rootfs_path/opt/.Hw_addr.txt` ];
-                        then # (no rootfs) or ( macids not matching)
+                        if [ "$rootfs_path" == "" ] || [ ! -e $rootfs_path/opt/.Hw_addr.txt  ];
+                        then # (no rootfs) or ( Hw_addr.txt not exists)
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
                             exit
+                        elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
+                        then
+                            echo "match found"
+                            sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' /opt $rootfs_path
                         else
-                            rsync -avzr / $rootfs_path 
+                            zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
+                            exit
 			fi
                         ;;
                 "2" ) #start new rsync
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
-                        umount /media/$USER/*
-                        for each in $(seq 1 $(ls -1 /dev/$dev_name* |sesd 1d|wc -l));do parted -s /dev/$dev_name rm $each;done
-                        echo "start inc Bkup"
+                        formatExternalmedia
+                        echo $rootfs_path
+                        sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' /opt /mnt/rootfs/
+                        sync
+                        sudo umount /mnt/*
+                        sudo rm -rf /mnt/*
                         ;;
         esac
         ;;
     "2" ) #Complete 
-        for each in $(seq 1 $(ls -1 /dev/$dev_name* |sesd 1d|wc -l));do parted -s /dev/$dev_name rm $each;done
-        echo "Do a complete Backup"
-        sudo tar -cpzf /media/student/<sdcard>/FirmwareInstall/ubuntu/ubuntu13.04.tar --one-file-system /
+        formatExternalmedia
+        sudo tar -cpzf /mnt/rootfs/ubuntu13.04.tar --one-file-system /
+        sync
+        sudo umount /mnt/*
+        sudo rm -rf /mnt/*
         ;;
 esac
+zenity --width=600 --height=100 --info --text "Done ! "
