@@ -1,4 +1,4 @@
-#!/bin/bash
+:!/bin/bash
 #***********************************************#
 #  Gui tool to create backups of FOSSEE laptop  #
 #	to external storage media.              #
@@ -135,6 +135,7 @@ sudoAccess
 removeSDCARD
 insertSDCARD
 SizeofSDCARD
+dev_name=`lsblk |head -2|tail -1|cut -d" " -f1` # tracking device name 
 selection_menu "Select Backup mode" "Incremental Backup" "Complete Backup"
 case "${result}" in
     "1" ) #Incremental
@@ -144,23 +145,24 @@ case "${result}" in
                         rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
                         mac_id=`cat /sys/class/net/eth0/address`     # macid of the machine
                         if [ "$rootfs_path" == "" ] || [ "$mac_id" -ne `cat $rootfs_path/opt/.Hw_addr.txt` ];
-                        then
+                        then # (no rootfs) or ( macids not matching)
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
+                            exit
                         else
-#                            rsync -avzr / $rootfs_path 
+                            rsync -avzr / $rootfs_path 
 			fi
                         ;;
                 "2" ) #start new rsync
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
                         umount /media/$USER/*
-                        echo $password
+                        for each in $(seq 1 $(ls -1 /dev/$dev_name* |sesd 1d|wc -l));do parted -s /dev/$dev_name rm $each;done
                         echo "start inc Bkup"
                         ;;
         esac
         ;;
     "2" ) #Complete 
+        for each in $(seq 1 $(ls -1 /dev/$dev_name* |sesd 1d|wc -l));do parted -s /dev/$dev_name rm $each;done
         echo "Do a complete Backup"
         sudo tar -cpzf /media/student/<sdcard>/FirmwareInstall/ubuntu/ubuntu13.04.tar --one-file-system /
         ;;
 esac
-
