@@ -8,7 +8,7 @@
 # functions()
 # ###########
 # ------------------------------------------------------------#
-# selection_menu ()                                           #
+# selection_menu()                                            #
 # shows the menu with two options.                            #
 # Parameter: $1(title) $2(option1) $3(option2)                #
 # change the value of $result to 1 or 2 according to option   #
@@ -16,7 +16,6 @@
 # ------------------------------------------------------------#
 selection_menu() {
 choice="$(zenity --width=600 --height=200 --list --radiolist --title="$1" --text "<b>Choose :</b> " --hide-header --column "selection"  --column "options" FALSE "$2" FALSE "$3")"
-
 case "${choice}" in
     $2 )
         result="1" # if option1 is selected.
@@ -27,10 +26,8 @@ case "${choice}" in
 esac
 }
 # ------------------------------------------------------------#
-# sudoAccess ()                                               #
-# get the sudo password from user via zenity window and       #
-# stores in a global variable ($password).                    #
-#                                                             #
+# sudoAccess() get the sudo password from user via zenity     #
+# window and stores in a global variable ($password).         #
 # ------------------------------------------------------------#
 sudoAccess() {
 # Remove any previous sudo passwords
@@ -58,9 +55,9 @@ fi
 done
 }
 # ------------------------------------------------------------#
-# Prompt a dialog box asking user to remove all the external  #
-# media and after that stores the size of disk without media  #
-# on $sizeofDiskBeforeSDCARD                                  #
+# removeSDCARD() Prompt a dialog box asking user to remove    #
+# all the external media and after that stores the size of    #
+# disk without media on $sizeofDiskBeforeSDCARD               #
 # ------------------------------------------------------------#
 removeSDCARD() {
 # The dialog box below will ask user to remove drive(sdcard)
@@ -79,9 +76,9 @@ sizeofDiskBeforeSDCARD=$(echo $password | sudo -S sfdisk -s\
 fi
 }
 # ------------------------------------------------------------#
-# Prompt a dialog box asking user to connect the required     #
-# media & stores the size of disk after inserting the media   #
-# on $sizeofDiskAfterSDCARD.                                  #
+# insertSDCARD() Prompt a dialog box asking user to connect   #
+# the required media & stores the size of disk after inserting#
+# the media on $sizeofDiskAfterSDCARD.                        #
 # ------------------------------------------------------------#
 insertSDCARD() {
 # The dialog box below will ask user to insert sdcard
@@ -98,9 +95,9 @@ sizeofDiskAfterSDCARD=$(echo $password | sudo -S sfdisk -s\
 fi
 }
 # ------------------------------------------------------------#
-# Prompt a dialog box showing the size of detected media in   #
-# GB. After calculating difference of sizeofDiskBeforeSDCARD  #
-# and sizeofDiskAfterSDCARD                                   #
+# SizeofSDCARD() Prompt a dialog box showing the size of      #
+# detected media in GB. After calculating difference of       #
+# sizeofDiskBeforeSDCARD and sizeofDiskAfterSDCARD            #
 # ------------------------------------------------------------#
 SizeofSDCARD() {
 # verifying new device by finding difference in size
@@ -126,9 +123,9 @@ fi
 fi
 }
 # ------------------------------------------------------------#
-# unmount the mounted partitions, create new partition table  #
-# format 1st partition to vfat, 2nd to ext4 and mount under   #
-# /mnt                                                        #
+# formatExternalmedia() unmount the mounted partitions, create#
+# new partition table format 1st partition to vfat,           #
+# 2nd to ext4 and mount under /mnt                            #
 # ------------------------------------------------------------#
 formatExternalmedia() {
 umount /media/$USER/*
@@ -151,14 +148,14 @@ SizeofSDCARD
 dev_name=`lsblk |head -2|tail -1|cut -d" " -f1` # tracking device name 
 selection_menu "Select Backup mode" "Incremental Backup" "Complete Backup"
 case "${result}" in
-    "1" ) #Incremental
+    "1" ) # Incremental
         selection_menu "Incremental Backup options" "Continue with previous backup storage[if you have a previous incremental backup] " "Create a new backup by formating the storage"
         case "${result}" in
-                "1" ) # check for mac_id matching & proceed to rsync
+                "1" ) # "Continue with previous backup": check for mac_id matching & proceed to rsync
                         rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
                         mac_id=`cat /sys/class/net/eth0/address`     # macid of the machine
                         if [ "$rootfs_path" == "" ] || [ ! -e $rootfs_path/opt/.Hw_addr.txt  ];
-                        then # (no rootfs) or ( Hw_addr.txt not exists)
+                        then # (no rootfs) or ( /media/rootfs/Hw_addr.txt not exists)
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
                             exit
                         elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
@@ -170,7 +167,7 @@ case "${result}" in
                             exit
 			fi
                         ;;
-                "2" ) #start new rsync
+                "2" ) # "new incremental backup" start new rsync
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
                         formatExternalmedia
                         echo $rootfs_path
@@ -181,7 +178,7 @@ case "${result}" in
                         ;;
         esac
         ;;
-    "2" ) #Complete 
+    "2" ) # Complete 
         formatExternalmedia
         sudo tar -cpzf /mnt/rootfs/ubuntu13.04.tar --one-file-system /
         sync
