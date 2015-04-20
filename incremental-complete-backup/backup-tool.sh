@@ -107,7 +107,7 @@ sizeSDCARDKbytes=$(($sizeofDiskAfterSDCARD - $sizeofDiskBeforeSDCARD))
 sizeSDCARD=$(echo "scale=2;$sizeSDCARDKbytes/1048576" | bc)
 # Converting sizeSDCARD to integer, so as to use in conditional statement,
 # if any card is detected it will go inside 'else' statement
-if [ $(echo $sizeSDCARD |cut -f 1 -d '.') -eq 0 ]
+if [ $(echo $sizeSDCARD |cut -f 1 -d '.') -le 0 ]
 then
 zenity --info --title "Info" --text "No media found, please check and restart application"
 exit 0
@@ -136,6 +136,18 @@ sudo mkfs -t ext4 /dev/$dev_name*2
 sudo mount /dev/$dev_name*1 /mnt/boot
 sudo mount /dev/$dev_name*2 /mnt/rootfs
 }
+# ------------------------------------------------------------#
+# formattofat() unmount the mounted partitions, create        #
+# new partition table format 1st partition to vfat,           #
+#                                                             #
+# ------------------------------------------------------------#
+formattofat() {
+umount /media/$USER/*
+echo $password |sudo -S mkdir -p /mnt/boot 
+echo -e "o\nn\np\n1\n\n\nw"|sudo fdisk /dev/$dev_name  # delete old partition table and creating new
+sudo mkfs.vfat /dev/$dev_name*1
+sudo mount -t vfat /dev/$dev_name*1 /mnt/boot -o rw,uid=1000,gid=1000
+}
 
 ###################################################################################
 # Execution starts here.
@@ -155,7 +167,7 @@ case "${result}" in
                         rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
                         mac_id=`cat /sys/class/net/eth0/address`     # macid of the machine
                         if [ "$rootfs_path" == "" ] || [ ! -e $rootfs_path/opt/.Hw_addr.txt  ];
-                        then # (no rootfs) or ( /media/rootfs/Hw_addr.txt not exists)
+                        then # (no rootfs) or ( rootfs doesn't contain Hw_addr.txt )
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
                             exit
                         elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
@@ -179,10 +191,12 @@ case "${result}" in
         esac
         ;;
     "2" ) # Complete 
-        formatExternalmedia
-        sudo tar -cpzf /mnt/rootfs/ubuntu13.04.tar --one-file-system /
+        formattofat
+        sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
+        #rm -f /etc/udev/rules.d/70-persistent-net.rules
+        sudo tar -cpzf /mnt/boot/fossee-os.tar --one-file-system /
         sync
-        sudo umount /mnt/*
+        echo $password |sudo umount /mnt/* # refresh sudo access
         sudo rm -rf /mnt/*
         ;;
 esac
