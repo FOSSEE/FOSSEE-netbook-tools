@@ -116,7 +116,7 @@ installation()
     echo -e "\t\tInstallation complete."
     sleep 2
     echo ""
-    umount /dev/mmcblk0p1
+    #umount /dev/mmcblk0p1
     printf "\t\tPress ENTER to restart.[ Please remove the SD card first ]"
     read read_restart
     if $read_restart; then
