@@ -194,7 +194,7 @@ case "${result}" in
         formatforComplete
         sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
         #rm -f /etc/udev/rules.d/70-persistent-net.rules
-        sudo tar -cpzf /mnt/boot/fossee-os.tar --one-file-system /
+        sudo tar -cpzf /mnt/boot/fossee-os.tar.gz --one-file-system /
         sync
         echo $password |sudo umount /mnt/* # refresh sudo access
         sudo rm -rf /mnt/*
