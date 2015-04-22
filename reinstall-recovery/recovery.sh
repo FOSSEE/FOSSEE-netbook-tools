@@ -118,6 +118,7 @@ installation()
 	    mount /dev/mmcblk0p2 /tmp
 	    cp -a /tmp /nand_previous
 	    umount /dev/mmcblk0p2
+        fi
 
 	umount $ubuntu_dir
    # /bin/sh
