@@ -110,13 +110,13 @@ installation()
 	#Insert progress bar here.
 	#Check the no. of partitions on the SD card. 1?regular-backup!incremental-backup.
 
-	part_no_two=$(ls /dev/mmcblk0* | echo $a | cut -d' ' -f3) #Check for the second partition on the SD card.
-	if [ $part_no_2 = '' ]; then
+	part_no_two=$(ls /dev/mmcblk0* | echo $part_no_two | cut -d' ' -f3) #Check for the second partition on the SD card.
+	if [ $part_no_two ='' ]; then
 	    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
 	    sync
 	else
 	    mount /dev/mmcblk0p2 /tmp
-	    sh /mnt/bar cp -a /tmp /nand_previous
+	    cp -a /tmp /nand_previous
 	    umount /dev/mmcblk0p2
 
 	umount $ubuntu_dir
