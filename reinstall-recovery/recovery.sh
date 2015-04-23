@@ -112,7 +112,7 @@ installation()
 
 	part_no_two=$(ls /dev/mmcblk0*)
         part_no_two=$(echo $part_no_two | cut -d' ' -f3) #Check for the second partition on the SD card.
-	if [ $part_no_two ='' ]; then
+	if [ "$part_no_two" == '' ]; then
 	    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
 	    sync
 	else
