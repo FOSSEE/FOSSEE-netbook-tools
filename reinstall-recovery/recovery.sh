@@ -79,39 +79,51 @@ fi
 
 installation()
 {
-    
-    echo ""
-    echo ""
-    echo -e "\t\tThe installation is underway, do not exit..."
-   # exit 0
-    mkdir $ubuntu_dir
+    #Detect the no. of partitions on the SD Card.
+    #If it contains a single partition, then continue, otherwise copy the contents of ext4 to nand_previous.
+	echo ""
+        echo ""
+	echo -e "\t\tThe installation is underway, do not exit..."
+	# exit 0
+	mkdir $ubuntu_dir
    
    # This part is taken care of in lib/debian-installer/menu file.
    # mkdir /sd_card  
    # mount /dev/mmcblk0p1 /sd_card
 
-    if [ $(echo $?) -eq 0 ]; then
-      flash_erase $rootfs_part 0 0 > /dev/null
-    else 
-      echo -e"\t\tSD card not mounted"
-      sleep 3
-      exit 0
-    fi
-    ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num > /dev/null
-    ubimkvol /dev/ubi0 -N ubuntu-rootfs -m > /dev/null
-    if [ $(echo $?) -eq 0 ]; then
-      mount -t ubifs ubi0_0 $ubuntu_dir
-    else
-      echo -e "\t\tubimkvol failed"
-      sleep 3
-      exit 0
-    fi 
-   #Insert progress bar here.
-    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
-    sync
+	if [ $(echo $?) -eq 0 ]; then
+	    flash_erase $rootfs_part 0 0 > /dev/null
+	else 
+	    echo -e"\t\tSD card not mounted"
+	    sleep 3
+	    exit 0
+	fi
+	ubiattach /dev/ubi_ctrl -m $rootfs_mtd_num > /dev/null
+	ubimkvol /dev/ubi0 -N ubuntu-rootfs -m > /dev/null
+	if [ $(echo $?) -eq 0 ]; then
+	    mount -t ubifs ubi0_0 $ubuntu_dir
+	else
+	    echo -e "\t\tubimkvol failed"
+	    sleep 3
+	    exit 0
+	fi 
+	#Insert progress bar here.
+	#Check the no. of partitions on the SD card. 1?regular-backup!incremental-backup.
 
-    umount $ubuntu_dir
+	part_no_two=$(ls /dev/mmcblk0*)
+        part_no_two=$(echo $part_no_two | cut -d' ' -f3) #Check for the second partition on the SD card.
+	if [ "$part_no_two" == '' ]; then
+	    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
+	    sync
+	else
+	    mount /dev/mmcblk0p2 /tmp
+	    cp -a /tmp /nand_previous
+	    umount /dev/mmcblk0p2
+        fi
+
+	umount $ubuntu_dir
    # /bin/sh
+<<<<<<< HEAD
     echo "" 
     echo -e "\t\tInstallation complete."
     sleep 2
@@ -124,6 +136,21 @@ installation()
     else
       echo "It shouldn't come here"
     fi
+=======
+	echo "" 
+	echo -e "\t\tInstallation complete."
+	sleep 2
+	echo ""
+	umount /dev/mmcblk0p1
+	printf "\t\tPress ENTER to restart.[ Please remove the SD card first ]"
+	read read_restart
+	if $read_restart; then
+	    reboot
+	else
+	    echo "It shouldn't come here"
+	fi
+
+>>>>>>> backup-gui
     
 }
 #This functions presents the user with advanecd options where he/she can backup their data from previous installation or repair the current installation through shell prompt.
