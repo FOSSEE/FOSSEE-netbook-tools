@@ -62,7 +62,7 @@ done
 removeSDCARD() {
 # The dialog box below will ask user to remove drive(sdcard)
 zenity --question --title "Remove media" \
---text "Please remove your drive(sdcard) if connected,
+--text "Please remove your drive (sdcard/pendrive) if connected,
 then press YES to continue"
 # Checking the return value of zenity dialog, same as previous function
 if [ $? -eq 1 ]
@@ -82,7 +82,7 @@ fi
 # ------------------------------------------------------------#
 insertSDCARD() {
 # The dialog box below will ask user to insert sdcard
-zenity --question --title "Insert media" --text "Now please insert your drive(sdcard) back,\
+zenity --question --title "Insert media" --text "Now please insert your drive(sdcard/pendrive) back,\
 then press YES to continue"
 # Checking the button selected in zenity dialog
 if [ $? -eq 1 ]
@@ -157,7 +157,16 @@ sudoAccess
 removeSDCARD
 insertSDCARD
 SizeofSDCARD
-dev_name=`lsblk |head -2|tail -1|cut -d" " -f1` # tracking device name 
+if [ `ls /dev/mmc*` != "" ] ;
+then # memory card detected
+    $dev_name=`ls /dev/mmc* |head -1`
+elif [ `ls /dev/sd*` != "" ];
+then # pendrive detected
+    $dev_name=`ls /dev/sd* |head -1`
+else
+    zenity --width=600 --height=100 --info --text "Device not found !"
+    exit
+fi
 selection_menu "Select Backup mode" "Incremental Backup" "Complete Backup"
 case "${result}" in
     "1" ) # Incremental
@@ -193,6 +202,9 @@ case "${result}" in
     "2" ) # Complete 
         formatforComplete
         sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
+        rm -r ~/.ssh ~/.mozilla ~/.config/chromium
+        rm -r ~/Templates ~/Downloads/*
+        rm ~/.vimrc ~/.viminfo
         rm -f /etc/udev/rules.d/70-persistent-net.rules
         sudo tar -cpzf /mnt/boot/fossee-os.tar.gz --one-file-system /
         sync
