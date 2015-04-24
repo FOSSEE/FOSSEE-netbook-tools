@@ -62,7 +62,7 @@ done
 removeSDCARD() {
 # The dialog box below will ask user to remove drive(sdcard)
 zenity --question --title "Remove media" \
---text "Please remove your drive (sdcard/pendrive) if connected,
+--text "Please remove your sdcard if connected,
 then press YES to continue"
 # Checking the return value of zenity dialog, same as previous function
 if [ $? -eq 1 ]
@@ -82,7 +82,7 @@ fi
 # ------------------------------------------------------------#
 insertSDCARD() {
 # The dialog box below will ask user to insert sdcard
-zenity --question --title "Insert media" --text "Now please insert your drive(sdcard/pendrive) back,\
+zenity --question --title "Insert media" --text "Now please insert your sdcard back,\
 then press YES to continue"
 # Checking the button selected in zenity dialog
 if [ $? -eq 1 ]
@@ -152,21 +152,12 @@ sudo mount -t vfat /dev/$dev_name*1 /mnt/boot -o rw,uid=1000,gid=1000
 ###################################################################################
 # Execution starts here.
 
-zenity --width=600 --height=200 --info --text "You need an 8GB or above external storage device (sdcard /pendrive) to continue"
+zenity --width=600 --height=200 --info --text "You need an 8GB or above external storage device (sdcard) to continue"
 sudoAccess
 removeSDCARD
 insertSDCARD
 SizeofSDCARD
-if [ `ls /dev/mmc*` != "" ] ;
-then # memory card detected
-    $dev_name=`ls /dev/mmc* |head -1`
-elif [ `ls /dev/sd*` != "" ];
-then # pendrive detected
-    $dev_name=`ls /dev/sd* |head -1`
-else
-    zenity --width=600 --height=100 --info --text "Device not found !"
-    exit
-fi
+$dev_name=`/dev/mmcblk0`
 selection_menu "Select Backup mode" "Incremental Backup" "Complete Backup"
 case "${result}" in
     "1" ) # Incremental
