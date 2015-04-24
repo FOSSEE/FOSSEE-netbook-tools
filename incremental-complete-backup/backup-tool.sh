@@ -133,7 +133,7 @@ echo $password |sudo -S mkdir -p /mnt/boot /mnt/rootfs
 echo -e "o\nn\np\n1\n\n+100M\nn\np\n2\n\n\nw"|sudo fdisk /dev/$dev_name  # delete old partition table and creating new
 sudo mkfs.vfat /dev/$dev_name*1
 sudo mkfs -t ext4 /dev/$dev_name*2
-sudo mount /dev/$dev_name*1 /mnt/boot
+sudo mount -t vfat /dev/$dev_name*1 /mnt/boot -o rw,uid=1000,gid=1000
 sudo mount /dev/$dev_name*2 /mnt/rootfs
 }
 # ------------------------------------------------------------#
@@ -173,7 +173,7 @@ case "${result}" in
                         elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
                         then
                             echo "match found"
-                            sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' /opt $rootfs_path
+                            sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' / $rootfs_path
                         else
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
                             exit
@@ -182,10 +182,10 @@ case "${result}" in
                 "2" ) # "new incremental backup" start new rsync
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
                         formatforIncremental
-                        echo $rootfs_path
-                        sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' /opt /mnt/rootfs/
+                        sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
+                        sudo rsync -latgrzpo --exclude='/tmp/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / /mnt/rootfs/
                         sync
-                        sudo umount /mnt/*
+                        echo $password |sudo umount /mnt/* # refresh sudo access
                         sudo rm -rf /mnt/*
                         ;;
         esac
@@ -193,7 +193,7 @@ case "${result}" in
     "2" ) # Complete 
         formatforComplete
         sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
-        #rm -f /etc/udev/rules.d/70-persistent-net.rules
+        rm -f /etc/udev/rules.d/70-persistent-net.rules
         sudo tar -cpzf /mnt/boot/fossee-os.tar.gz --one-file-system /
         sync
         echo $password |sudo umount /mnt/* # refresh sudo access
