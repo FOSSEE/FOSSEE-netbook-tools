@@ -112,7 +112,7 @@ installation()
 
 	part_no_two=$(ls /dev/mmcblk0*)
         part_no_two=$(echo $part_no_two | cut -d' ' -f3) #Check for the second partition on the SD card.
-	if [ "$part_no_two" == '' ]; then
+	if [ "$part_no_two" == "" ]; then
 	    sh /mnt/bar /sd_card/fossee-os.tar.gz | tar xzpf - -C /nand_previous
 	    sync
 	else
@@ -123,7 +123,6 @@ installation()
 
 	umount $ubuntu_dir
    # /bin/sh
-<<<<<<< HEAD
     echo "" 
     echo -e "\t\tInstallation complete."
     sleep 2
@@ -136,21 +135,6 @@ installation()
     else
       echo "It shouldn't come here"
     fi
-=======
-	echo "" 
-	echo -e "\t\tInstallation complete."
-	sleep 2
-	echo ""
-	umount /dev/mmcblk0p1
-	printf "\t\tPress ENTER to restart.[ Please remove the SD card first ]"
-	read read_restart
-	if $read_restart; then
-	    reboot
-	else
-	    echo "It shouldn't come here"
-	fi
-
->>>>>>> backup-gui
     
 }
 #This functions presents the user with advanecd options where he/she can backup their data from previous installation or repair the current installation through shell prompt.
