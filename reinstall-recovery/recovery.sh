@@ -117,7 +117,7 @@ installation()
 	    sync
 	else
 	    mount /dev/mmcblk0p2 /tmp
-	    cp -a /tmp /nand_previous
+	    cp -a /tmp/* /nand_previous
 	    umount /dev/mmcblk0p2
         fi
 
