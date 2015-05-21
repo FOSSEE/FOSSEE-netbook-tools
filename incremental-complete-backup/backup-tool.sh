@@ -216,10 +216,13 @@ case "${result}" in
         rm -r ~/Templates ~/Downloads/*
         rm ~/.vimrc ~/.viminfo
         rm -f /etc/udev/rules.d/70-persistent-net.rules
-        sudo tar -cpzf /mnt/boot/fossee-os.tar.gz --one-file-system /
+        sudo tar -cpzf /mnt/boot/fossee-os.tar.gz --one-file-system / | 
+           zenity --progress --title "Creating backup"  \
+              --width=600 --height=100 --no-cancel \
+              --text="It may take some time.(approx 45min for 8GB)" --pulsate --auto-close
         sync
         echo $password |sudo umount /mnt/* # refresh sudo access
         sudo rm -rf /mnt/*
+        zenity --width=300 --height=100 --info --text "Backup is Done, Now you can eject your SDcard and use for restore."
         ;;
 esac
-zenity --width=600 --height=100 --info --text "Done ! "
