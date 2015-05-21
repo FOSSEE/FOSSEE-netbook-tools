@@ -179,6 +179,11 @@ case "${result}" in
                         elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
                         then
                             echo "match found"
+                            sudo rsync -latgrzpo --exclude='/mnt/*' --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' / $rootfs_path |
+                            zenity --progress --title "Creating backup" \
+                                --width=600 --height=100 --no-cancel \
+                                --text="Please be patient as it may take some time." --pulsate --auto-close
+                            zenity --width=300 --height=100 --info --text "Backup is Done, Now you can eject your SDcard and use for restore."
                             sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' / $rootfs_path
                         else
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
@@ -188,8 +193,15 @@ case "${result}" in
                 "2" ) # "new incremental backup" start new rsync
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
                         formatforIncremental
-                        sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
-                        sudo rsync -latgrzpo --exclude='/tmp/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / /mnt/rootfs/
+                        sudo rsync -lavtgrzpo --progress /opt/fossee-os/* /mnt/boot/|
+			   zenity --progress --title "Preparing SDcard" \
+                              --width=600 --height=100 --no-cancel \
+			      --text="Please wait..." --pulsate --auto-close
+                        sudo rsync -lavtgrzpo --progress --exclude='/tmp/*' --exclude='/mnt/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / /mnt/rootfs/ |
+                          zenity --progress --title "Creating backup" \
+                              --width=600 --height=100 --no-cancel \
+                              --text="It may take some time.(approx 45min for 8GB)" --pulsate --auto-close
+
                         sync
                         echo $password |sudo umount /mnt/* # refresh sudo access
                         sudo rm -rf /mnt/*
@@ -198,8 +210,10 @@ case "${result}" in
         ;;
     "2" ) # Complete 
         formatforComplete
-        sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/
-        rm -r ~/.ssh ~/.mozilla ~/.config/chromium
+        sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/ |
+           zenity --progress --title "Preparing SDcard" \
+              --width=600 --height=100 --no-cancel \
+              --text="Please wait..." --pulsate --auto-close
         rm -r ~/Templates ~/Downloads/*
         rm ~/.vimrc ~/.viminfo
         rm -f /etc/udev/rules.d/70-persistent-net.rules
