@@ -128,6 +128,8 @@ fi
 # 2nd to ext4 and mount under /mnt                            #
 # ------------------------------------------------------------#
 formatforIncremental() {
+source easybashgui
+wait_for "Formating SDcard...";
 umount /media/$USER/*
 echo $password |sudo -S mkdir -p /mnt/boot /mnt/rootfs
 echo -e "o\nn\np\n1\n\n+100M\nn\np\n2\n\n\nw"|sudo fdisk /dev/$dev_name  # delete old partition table and creating new
@@ -135,6 +137,7 @@ sudo mkfs.vfat /dev/$dev_name*1
 sudo mkfs -t ext4 /dev/$dev_name*2
 sudo mount -t vfat /dev/$dev_name*1 /mnt/boot -o rw,uid=1000,gid=1000
 sudo mount /dev/$dev_name*2 /mnt/rootfs
+terminate_wait_for
 }
 # ------------------------------------------------------------#
 # formatforComplete() unmount the mounted partitions, create  #
@@ -142,11 +145,14 @@ sudo mount /dev/$dev_name*2 /mnt/rootfs
 #                                                             #
 # ------------------------------------------------------------#
 formatforComplete() {
+source easybashgui
+wait_for "Formating Sdcard...";
 umount /media/$USER/*
 echo $password |sudo -S mkdir -p /mnt/boot
 echo -e "o\nn\np\n1\n\n\nw"|sudo fdisk /dev/$dev_name  # delete old partition table and creating new
 sudo mkfs.vfat /dev/$dev_name*1
 sudo mount -t vfat /dev/$dev_name*1 /mnt/boot -o rw,uid=1000,gid=1000
+terminate_wait_for
 }
 
 ###################################################################################
