@@ -184,7 +184,6 @@ case "${result}" in
                                 --width=600 --height=100 --no-cancel \
                                 --text="Please be patient as it may take some time." --pulsate --auto-close
                             zenity --width=300 --height=100 --info --text "Backup is Done, Now you can eject your SDcard and use for restore."
-                            sudo rsync -latgrzpo --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' / $rootfs_path
                         else
                             zenity --width=600 --height=100 --info --text "Your storage media doesnot contain matching backup from this machine"
                             exit
