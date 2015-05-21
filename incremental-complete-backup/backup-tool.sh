@@ -163,8 +163,8 @@ sudoAccess
 removeSDCARD
 insertSDCARD
 SizeofSDCARD
-$dev_name=`/dev/mmcblk0`
-selection_menu "Select Backup mode" "Incremental Backup" "Complete Backup"
+dev_name="mmcblk0" # assuming SDcard only.
+selection_menu "Select Backup mode" "Incremental Backup_:_only copies files that have changed since last backup" "Complete Backup_:_creates a full copy which can be restored."
 case "${result}" in
     "1" ) # Incremental
         selection_menu "Incremental Backup options" "Continue with previous backup storage[if you have a previous incremental backup] " "Create a new backup by formating the storage"
