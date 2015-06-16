@@ -178,8 +178,8 @@ case "${result}" in
                             exit
                         elif [ "$mac_id" == "$(cat $rootfs_path/opt/.Hw_addr.txt)" ]; # if macids are matching
                         then
-                            echo "match found"
-                            sudo rsync -latgrzpo --exclude='/mnt/*' --exclude='/tmp' --exclude='/dev' --exclude='/proc' --exclude='/sys' / $rootfs_path |
+                            #echo "match found"
+                            sudo rsync -latgrzpo --exclude='/mnt/*' --exclude='/tmp/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / $rootfs_path |
                             zenity --progress --title "Creating backup" \
                                 --width=600 --height=100 --no-cancel \
                                 --text="Please be patient as it may take some time." --pulsate --auto-close
@@ -196,7 +196,7 @@ case "${result}" in
 			   zenity --progress --title "Preparing SDcard" \
                               --width=600 --height=100 --no-cancel \
 			      --text="Please wait..." --pulsate --auto-close
-                        sudo rsync -lavtgrzpo --progress --exclude='/tmp/*' --exclude='/mnt/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / /mnt/rootfs/ |
+                        sudo rsync -lavtgrzpo --exclude='/mnt/*' --exclude='/tmp/*' --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' / /mnt/rootfs/ |
                           zenity --progress --title "Creating backup" \
                               --width=600 --height=100 --no-cancel \
                               --text="It may take some time.(approx 45min for 8GB)" --pulsate --auto-close
