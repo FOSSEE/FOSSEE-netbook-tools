@@ -24,6 +24,21 @@ case "${choice}" in
         result="2" # if option2 is selected.
         ;;
 esac
+} 
+confirm_format() {
+zenity --question --text "SDcard will be formated. All the data on the Sdcard will be deleted. You may take a backup.\n\nDo you want to continue?"
+if [ $? -eq 0 ] 
+then 
+echo $?
+else
+zenity --question --text "Are you sure to want to quit"
+if [ $? -eq 0 ] 
+then 
+exit
+else
+confirm_format
+fi
+fi
 }
 # ------------------------------------------------------------#
 # sudoAccess() get the sudo password from user via zenity     #
@@ -167,7 +182,7 @@ dev_name="mmcblk0" # assuming SDcard only.
 selection_menu "Select Backup mode" "Incremental Backup_:_only copies files that have changed since last backup" "Complete Backup_:_creates a full copy which can be restored."
 case "${result}" in
     "1" ) # Incremental
-        selection_menu "Incremental Backup options" "Continue with previous backup storage[if you have a previous incremental backup] " "Create a new backup by formating the storage"
+        selection_menu "Incremental Backup options" "Continue with previous backup storage[if you have a previous incremental backup] " "Create a new incremental backup"
         case "${result}" in
                 "1" ) # "Continue with previous backup": check for mac_id matching & proceed to rsync
                         rootfs_path=`mount | grep ext|cut -d" " -f3` # tracking the rootfs mount path
@@ -190,6 +205,7 @@ case "${result}" in
 			fi
                         ;;
                 "2" ) # "new incremental backup" start new rsync
+                        confirm_format
                         cat /sys/class/net/eth0/address > /opt/.Hw_addr.txt # storing mac_id b4 copy
                         formatforIncremental
                         sudo rsync -lavtgrzpo --progress /opt/fossee-os/* /mnt/boot/|
@@ -208,6 +224,7 @@ case "${result}" in
         esac
         ;;
     "2" ) # Complete 
+        confirm_format
         formatforComplete
         sudo rsync -latgrzpo /opt/fossee-os/* /mnt/boot/ |
            zenity --progress --title "Preparing SDcard" \
